@@ -15,11 +15,18 @@ def outfileexists(outname):
 
 
 def assembledict(mydict, mykeys, dockjson):
+    userdict = {'UserParams': {'restart': '', 'rm': '' , 'dockercommand': '',
+                             'sig-proxy':''
+                            }}
     for desc in mykeys:
         newdict = {desc: {}}
         for keys in mykeys[desc]:
             newdict[desc][keys] = dockjson[desc][keys]
         mydict.append(newdict)
+    if dockjson['Name'] != "":
+        namedict = {'Name': dockjson['Name'] }
+        mydict.append(namedict)
+    mydict.append(userdict)
     return mydict
 
 
