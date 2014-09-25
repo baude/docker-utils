@@ -47,7 +47,8 @@ def formfinaldict(mydict):
             'Image':'image', 'Memory':'memory', 'Tty':'tty', 'User':'user', 'WorkingDir':'workdir',
             'CapAdd':'cap-add', 'CapDrop':'cap-drop', 'ContainerIDFile':'cidfile', 'Dns':'dns',
             'DnsSearch':'dns-search', 'Links':'link', 'LxcConf':'lxc-conf', 'NetworkMode':'net',
-            'PortBindings':'publish', 'Privileged':'privileged', 'PublishAllPorts':'publish=all'
+            'PortBindings':'publish', 'Privileged':'privileged', 'PublishAllPorts':'publish=all',
+            'Binds':'volume'
              }
     # Assemble attach
     attach = []
@@ -63,6 +64,9 @@ def formfinaldict(mydict):
 
     if len(attach) > 0:
         newdict['attach'] = attach
+
+    if mydict['Hostname'] == "localhost":
+        del mydict['Hostname']
 
     # Deal with port bindings
     if 'PortBindings' in mydict:
@@ -81,7 +85,6 @@ def formfinaldict(mydict):
                 pbind.append(("{0}:{1}:{2}".format(hostip, hostport, containerport)))
         newdict['publish'] = pbind
         del mydict['PortBindings']
-
 
     # Push left over values to newdict
     for keys in mydict.keys():

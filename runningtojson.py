@@ -91,7 +91,7 @@ configkeys = {'Config': {'AttachStderr', 'AttachStdin', 'AttachStdout',
                          'CpuShares', 'Cpuset', 'Env', 'Hostname',
                          'Image', 'Memory', 'Tty', 'User', 'WorkingDir'
                          },
-              'HostConfig': {'CapAdd', 'CapDrop', 'ContainerIDFile', 'Dns',
+              'HostConfig': {'Binds', 'CapAdd', 'CapDrop', 'ContainerIDFile', 'Dns',
                              'DnsSearch', 'Links', 'LxcConf', 'NetworkMode',
                              'PortBindings', 'Privileged', 'PublishAllPorts'
                              }
