@@ -9,11 +9,17 @@ from optparse import OptionParser
 
 usage = "usage: %prog inputfile"
 parser = OptionParser(usage)
+parser.add_option("--rm", default=False, help="remove container data after close", dest="remove", action="store_true")
+
 (options, args) = parser.parse_args()
 if len(args) != 1:
-    parser.error("You must provide one and only one input file.")
+    parser.error("You must provide at least one input file")
     quit()
 
+if options.remove == True:
+    remove = True
+else:
+    remove = False
 
 json_data = open(args[0]).read()
 json_schema = open("docker-wrapper-schema.json").read()
@@ -121,9 +127,11 @@ def dockerparamform(params):
     return dockerargs
 
 
-def dockerrun(params, image, dockercommand, containername):
+def dockerrun(params, image, dockercommand, containername, remove):
 
     dockerargs = dockerparamform(params)
+    if remove == True:
+        dockerargs = dockerargs + ("{0}".format("--rm "))
     dockerargs = dockerargs + ("--name={0}".format(containername))
     print "docker %s %s %s" % (dockercommand, dockerargs, image)
     print ""
@@ -155,5 +163,5 @@ if (containernameexists(containername)):
     quit()
 else:
     barfoo = formfinaldict(foobar)
-    dockerrun(barfoo, image, dockercommand, containername)
+    dockerrun(barfoo, image, dockercommand, containername, remove)
 

@@ -68,8 +68,10 @@ def terminal(cpid):
     loop.run()
 
 def terminal2(cpid):
-    os.system(('sudo nsenter -m -u -n -i -p -t {0} /bin/bash'.format(cpid)))
-    
+    nsenter = ('sudo nsenter -m -u -n -i -p -t {0} /bin/bash'.format(cpid))
+    import pty
+    pty.spawn(nsenter.split())
+
 def getpid(containarray, mynum):
     return containarray[int(mynum)]['State']['Pid']
 
@@ -115,7 +117,7 @@ def printsummary():
             printsummary()
 
         except:
-            print "Unable to find 3  that container..."
+            print "Unable to find that container..."
         
     if containernum.upper() == "D":
        delcontainer = getcontainer() 
@@ -126,13 +128,13 @@ def printsummary():
             delprocess = subprocess.Popen([myval], stdout=subprocess.PIPE, shell=True)
             printsummary()
        except:
-           print "Unable to find 2 that container ..."
+           print "Unable to find that container ..."
      
     if containernum.upper() == "P":
         peekcontainer = getcontainer() 
         cpid = getpid(cdetails, peekcontainer)
         foo = terminal2(cpid)
-    #printsummary()
+        printsummary()
 
     else:
         printsummary()
