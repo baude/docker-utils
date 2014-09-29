@@ -5,7 +5,7 @@ import os.path
 import subprocess
 import json
 import re
-from optparse import OptionParser
+import argparse
 
 print " "
 
@@ -52,9 +52,9 @@ def checkcontaineruid(cuid):
                 quit()
 
 
-def writeoutput(myoptions, outfile):
+def writeoutput(outfile):
     exists = outfileexists(outname)
-    if (not myoptions.force) and (exists):
+    if (not args.force) and (exists):
         print ("{0} already exists. You can pass \
                -f to override".format(outname))
         quit()
@@ -63,26 +63,21 @@ def writeoutput(myoptions, outfile):
     outfile.closed
     print ("Wrote {0}".format(outname))
 
-usage = "usage: %prog containerid"
-parser = OptionParser(usage)
-parser.add_option("-f", "--force", dest="force", default=False,
-                  action="store_true",
-                  help="Force overwriting the output file")
+parser = argparse.ArgumentParser()
+parser.add_argument("cuid",
+                    metavar="CONTAINER_ID",
+                    help="Container ID. Provide at least 3 characters.")
+parser.add_argument("-f", "--force", default=False,
+                    action="store_true",
+                    help="Force overwriting the output file")
 
-(options, args) = parser.parse_args()
-if len(args) == 0:
-    parser.error("You must provide a container ID to convert")
-    quit()
+args = parser.parse_args()
 
-if len(args) > 1:
-    parser.error("Too many inputs provided")
-
-# Do I need to account for portions of
-# the cuid being used?
-
-cuid = checkcontaineruid(args[0])
+cuid = checkcontaineruid(args.cuid)
 
 # Do I need to check if they are running?
+# docker inspect works on images and contianers
+# check if cuid is in the 'docker ps -a' list?
 
 outname = ("{0}.json".format(cuid))
 
@@ -106,4 +101,4 @@ configkeys = {'Config': {'AttachStderr', 'AttachStdin', 'AttachStdout',
               }
 
 vals = assembledict(newconfig, configkeys, dockjson)
-writeoutput(options, outname)
+writeoutput(outname)
