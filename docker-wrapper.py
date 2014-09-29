@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 # Python wrapper for docker
 # Imports json file and calls docker
 

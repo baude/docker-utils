@@ -1,13 +1,16 @@
+#!/usr/bin/env python
+
 import os
 import os.path
 import subprocess
 import json
-from optparse import OptionParser
+import re
+import argparse
 
 print " "
 
 
-def outfileexists(outname):
+def outfileexists():
     if os.path.isfile(outname):
         return True
     else:
@@ -31,20 +34,27 @@ def assembledict(mydict, mykeys, dockjson):
 
 
 def checkcontaineruid(cuid):
+    """Checks ID and returns valid containeruid. Accepts partial UID"""
     proc = subprocess.Popen(["docker ps -q"],
                             stdout=subprocess.PIPE, shell=True)
     out = proc.stdout.read()
     containeruids = out.split()
-    if cuid in containeruids:
-        return True
-    else:
-        print "Unable to find the container ID"
+    if not len(cuid) >= 3:
+        print "Container ID must be at least 3 characters"
         quit()
+    else:
+        for containeruid in containeruids:
+            m = re.match(cuid, containeruid)
+            if m:
+                return containeruid
+            else:
+                print "Unable to find container ID '%s'. Try 'docker ps'." % cuid
+                quit()
 
-
-def writeoutput(myoptions, outfile):
-    exists = outfileexists(outname)
-    if (not myoptions.force) and (exists):
+def writeoutput():
+    #outname = outname()
+    exists = outfileexists()
+    if (not args.force) and (exists):
         print ("{0} already exists. You can pass \
                -f to override".format(outname))
         quit()
@@ -53,30 +63,32 @@ def writeoutput(myoptions, outfile):
     outfile.closed
     print ("Wrote {0}".format(outname))
 
-usage = "usage: %prog containerid"
-parser = OptionParser(usage)
-parser.add_option("-f", "--force", dest="force", default=False,
-                  action="store_true",
-                  help="Force overwriting the output file")
+parser = argparse.ArgumentParser()
+parser.add_argument("cuid",
+                    metavar="CONTAINER_ID",
+                    help="Container ID. Provide at least 3 characters.")
+parser.add_argument("-f", "--force", default=False,
+                    action="store_true",
+                    help="Force overwriting the output file")
+parser.add_argument("-o", "--output",
+                    metavar="OUTPUT.JSON",
+                    help="Specify the output filename")
 
-(options, args) = parser.parse_args()
-if len(args) == 0:
-    parser.error("You must provide a container ID to convert")
-    quit()
+args = parser.parse_args()
 
-if len(args) > 1:
-    parser.error("Too many inputs provided")
+def outname():
+    if args.output:
+        return args.output
+    else:
+        return "{0}.json".format(args.cuid)
 
-cuid = args[0]
+outname = outname()
 
-# Do I need to account for portions of
-# the cuid being used?
-
-checkcontaineruid(cuid)
+cuid = checkcontaineruid(args.cuid)
 
 # Do I need to check if they are running?
-
-outname = ("{0}.json".format(cuid))
+# docker inspect works on images and contianers
+# check if cuid is in the 'docker ps -a' list?
 
 mycommand = "docker inspect %s" % cuid
 containerproc = subprocess.Popen([mycommand],
@@ -98,4 +110,4 @@ configkeys = {'Config': {'AttachStderr', 'AttachStdin', 'AttachStdout',
               }
 
 vals = assembledict(newconfig, configkeys, dockjson)
-writeoutput(options, outname)
+writeoutput()
