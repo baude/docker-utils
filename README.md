@@ -23,7 +23,7 @@ Takes the json file from runningtojson.py and runs a container with the specifie
 `./docker-wrapper.py <output_from_runningtojson.json>`
 
 ### docker-dash.py
-A terminal dashboard to stop, delete and enter running containers.
+A terminal dashboard to stop, delete and enter running containers. Accepts comma- or space-speparated lists for all commands.
 
 ```./docker-dash.py
 $ sudo ./docker-dash.py
@@ -42,7 +42,7 @@ Command Reference: (q)uit (r)efresh (s)top (d)elete (p)eek
  
 Command: p
  
-Which Container?: 0
+Which Container(s)?: 0
 bash-4.2# exit
  
 #  ID           Image           Status  
@@ -59,7 +59,7 @@ Command Reference: (q)uit (r)efresh (s)top (d)elete (p)eek
  
 Command: s
  
-Which Container?: 0
+Which Container(s)?: 0
  
 ...
 ```
