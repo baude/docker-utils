@@ -4,6 +4,7 @@ import os
 import subprocess
 import json
 import urwid
+import re
 
 def getcontainerinfo(containeruids):
     cdetails = list ()
@@ -31,6 +32,18 @@ def isInt(mystr):
         return True
     except ValueError:
         return False
+
+def in2list(inlist):
+    """Converts input string into valid list
+
+    Parses spaces and/or commas"""
+    delim = None
+    if re.search(",", inlist):
+        delim = ","
+    else:
+        delim = " "
+    inlist = delim.join(inlist.split(delim))
+    return inlist.split(delim)
 
 def terminal(cpid):
     #myval = ["sudo","nsenter","-m","-u","-n","-i","-p","-t", cpid]
@@ -82,14 +95,18 @@ def returnuid(containarray, mynum):
     return myuid[:8]
 
 def getcontainer():
+    """returns valid list of container IDs"""
     print " "
-    stopcontainer = raw_input("Which Container?: ")
-    if (isInt(stopcontainer)):
-        return stopcontainer
-    else:
-        print " "
-        print ("{0} isn't a integer...".format(stopcontainer))
-    
+    stopcontainers = raw_input("Which Container(s)?: ")
+    stopcontainers = in2list(stopcontainers)
+    for container in stopcontainers:
+        # FIXME: check if it's valid integer
+        if not(isInt(container)):
+            print " "
+            print ("{0} isn't a integer...".format(container))
+        else:
+            return stopcontainers
+
 
 def printsummary():
     print " "
@@ -112,30 +129,35 @@ def printsummary():
         quit()
     if containernum.upper() == "S":
         stopcontainer = getcontainer()
-        try:
-            cid = returnuid(cdetails, stopcontainer)
-            myval = ("docker stop {0}".format(cid))
-            stopprocess = subprocess.Popen([myval], stdout=subprocess.PIPE, shell=True)
-            printsummary()
+        for container in stopcontainer:
+            try:
+                cid = returnuid(cdetails, container)
+                print "Stopping %s" % cid
+                myval = ("docker stop {0}".format(cid))
+                stopprocess = subprocess.Popen([myval], stdout=subprocess.PIPE, shell=True)
 
-        except:
-            print "Unable to find that container..."
-        
+            except:
+                print "Unable to find that container..."
+        printsummary()
+
     if containernum.upper() == "D":
-       delcontainer = getcontainer() 
-       print returnuid(cdetails, delcontainer)
-       try:
-            cid = returnuid(cdetails, delcontainer)
-            myval = ("docker rm {0}".format(cid))
-            delprocess = subprocess.Popen([myval], stdout=subprocess.PIPE, shell=True)
-            printsummary()
-       except:
-           print "Unable to find that container ..."
-     
+       delcontainer = getcontainer()
+       for container in delcontainer:
+           try:
+               cid = returnuid(cdetails, container)
+               print "Deleting %s" % cid
+               myval = ("docker rm {0}".format(cid))
+               delprocess = subprocess.Popen([myval], stdout=subprocess.PIPE, shell=True)
+           except:
+               print "Unable to find that container ..."
+       printsummary()
+
     if containernum.upper() == "P":
-        peekcontainer = getcontainer() 
-        cpid = getpid(cdetails, peekcontainer)
-        foo = terminal2(cpid)
+        peekcontainer = getcontainer()
+        for container in peekcontainer:
+            cpid = getpid(cdetails, container)
+            print "Entering container %s" % returnuid(cdetails, container)
+            foo = terminal2(cpid)
         printsummary()
 
     else:

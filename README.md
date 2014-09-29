@@ -23,6 +23,43 @@ Takes the json file from runningtojson.py and runs a container with the specifie
 `./docker-wrapper.py <output_from_runningtojson.json>`
 
 ### docker-dash.py
-A terminal dashboard to start, stop and enter running containers
+A terminal dashboard to stop, delete and enter running containers. Accepts comma- or space-speparated lists for all commands.
 
-`./docker-dash.py`
+```./docker-dash.py
+$ sudo ./docker-dash.py
+
+#  ID           Image           Status  
+ 0 064c5f85     rhel7           Running 
+ 1 2536412b     rhel7           Not Running
+ 2 dee33dcd     rhel7           Not Running
+ 3 c95d33db     rhel7           Not Running
+ 4 670fa3ff     rhel7           Not Running
+ 5 85c601b2     rhel7           Not Running
+ 6 f917cff6     centos          Not Running
+ 7 dfe49c18     pulp/pulp-admin Not Running
+ 
+Command Reference: (q)uit (r)efresh (s)top (d)elete (p)eek
+ 
+Command: p
+ 
+Which Container(s)?: 0
+bash-4.2# exit
+ 
+#  ID           Image           Status  
+ 0 064c5f85     rhel7           Running 
+ 1 2536412b     rhel7           Not Running
+ 2 dee33dcd     rhel7           Not Running
+ 3 c95d33db     rhel7           Not Running
+ 4 670fa3ff     rhel7           Not Running
+ 5 85c601b2     rhel7           Not Running
+ 6 f917cff6     centos          Not Running
+ 7 dfe49c18     pulp/pulp-admin Not Running
+ 
+Command Reference: (q)uit (r)efresh (s)top (d)elete (p)eek
+ 
+Command: s
+ 
+Which Container(s)?: 0
+ 
+...
+```
