@@ -5,21 +5,24 @@ Provides a way to specify how an image should be run. A set of utilities to simp
 * share images with defined `docker run` parameters
 * manage running containers through a terminal dashboard
 
-## runningtojson.py
+## installation
+`pip install -r requirements.txt`
+
+> NOTE: docker-dash.py requires python [urwid](http://excess.org/urwid/wiki/Installation)
+
+## Utilities
+
+###runningtojson.py
 Creates a json file describing the running container.
 
 `./runningtojson.py <docker_container_id>`
 
-## docker-wrapper.py
+### docker-wrapper.py
 Takes the json file from runningtojson.py and runs a container with the specified `docker run` parameters.
 
 `./docker-wrapper.py <output_from_runningtojson.json>`
 
-## docker-dash.py
+### docker-dash.py
 A terminal dashboard to start, stop and enter running containers
 
-requires python urwid
-
-```# pip install urwid
-# ./docker-dash.py
-```
+`./docker-dash.py`
