@@ -10,7 +10,7 @@ import argparse
 print " "
 
 
-def outfileexists(outname):
+def outfileexists():
     if os.path.isfile(outname):
         return True
     else:
@@ -51,9 +51,9 @@ def checkcontaineruid(cuid):
                 print "Unable to find container ID '%s'. Try 'docker ps'." % cuid
                 quit()
 
-
-def writeoutput(outfile):
-    exists = outfileexists(outname)
+def writeoutput():
+    #outname = outname()
+    exists = outfileexists()
     if (not args.force) and (exists):
         print ("{0} already exists. You can pass \
                -f to override".format(outname))
@@ -70,16 +70,25 @@ parser.add_argument("cuid",
 parser.add_argument("-f", "--force", default=False,
                     action="store_true",
                     help="Force overwriting the output file")
+parser.add_argument("-o", "--output",
+                    metavar="OUTPUT.JSON",
+                    help="Specify the output filename")
 
 args = parser.parse_args()
+
+def outname():
+    if args.output:
+        return args.output
+    else:
+        return "{0}.json".format(args.cuid)
+
+outname = outname()
 
 cuid = checkcontaineruid(args.cuid)
 
 # Do I need to check if they are running?
 # docker inspect works on images and contianers
 # check if cuid is in the 'docker ps -a' list?
-
-outname = ("{0}.json".format(cuid))
 
 mycommand = "docker inspect %s" % cuid
 containerproc = subprocess.Popen([mycommand],
@@ -101,4 +110,4 @@ configkeys = {'Config': {'AttachStderr', 'AttachStdin', 'AttachStdout',
               }
 
 vals = assembledict(newconfig, configkeys, dockjson)
-writeoutput(outname)
+writeoutput()
