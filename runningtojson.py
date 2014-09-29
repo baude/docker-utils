@@ -4,6 +4,7 @@ import os
 import os.path
 import subprocess
 import json
+import re
 from optparse import OptionParser
 
 print " "
@@ -33,15 +34,22 @@ def assembledict(mydict, mykeys, dockjson):
 
 
 def checkcontaineruid(cuid):
+    """Checks ID and returns valid containeruid. Accepts partial UID"""
     proc = subprocess.Popen(["docker ps -q"],
                             stdout=subprocess.PIPE, shell=True)
     out = proc.stdout.read()
     containeruids = out.split()
-    if cuid in containeruids:
-        return True
-    else:
-        print "Unable to find the container ID"
+    if not len(cuid) >= 3:
+        print "Container ID must be at least 3 characters"
         quit()
+    else:
+        for containeruid in containeruids:
+            m = re.match(cuid, containeruid)
+            if m:
+                return containeruid
+            else:
+                print "Unable to find container ID '%s'. Try 'docker ps'." % cuid
+                quit()
 
 
 def writeoutput(myoptions, outfile):
@@ -69,12 +77,10 @@ if len(args) == 0:
 if len(args) > 1:
     parser.error("Too many inputs provided")
 
-cuid = args[0]
-
 # Do I need to account for portions of
 # the cuid being used?
 
-checkcontaineruid(cuid)
+cuid = checkcontaineruid(args[0])
 
 # Do I need to check if they are running?
 
