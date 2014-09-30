@@ -86,7 +86,13 @@ def terminal(cpid):
 def terminal2(cpid):
     nsenter = ('sudo nsenter -m -u -n -i -p -t {0} /bin/bash'.format(cpid))
     import pty
-    pty.spawn(nsenter.split())
+    import os
+    if os.getenv('DISPLAY',"") == "":
+        pty.spawn(nsenter.split())
+    else:
+        mycommand = "xterm -T {0} -e {1}".format(cpid, nsenter)
+        containerproc = subprocess.Popen([mycommand], stdout=subprocess.PIPE, shell=True)
+        
 
 def getpid(containarray, mynum):
     return containarray[int(mynum)]['State']['Pid']
