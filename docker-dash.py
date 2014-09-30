@@ -4,7 +4,6 @@ import os
 import subprocess
 import json
 import urwid
-import re
 import time
 
 def getcontainerinfo(containeruids):
@@ -34,17 +33,20 @@ def isInt(mystr):
     except ValueError:
         return False
 
-def in2list(inlist):
+def str2list(inlist):
     """Converts input string into valid list
 
-    Parses spaces and/or commas"""
-    delim = None
-    if re.search(",", inlist):
+    Parses spaces, commas and range of values('-')"""
+    delim = " "
+    if ',' in inlist:
         delim = ","
-    else:
-        delim = " "
     inlist = delim.join(inlist.split(delim))
-    return inlist.split(delim)
+    containerlist = inlist.split(delim)
+    rangelist = [containerlist.pop(r[0]) for r in enumerate(containerlist) if '-' in containerlist[r[0]]]
+    for rl in rangelist:
+        start, end = rl.split('-')
+        containerlist.extend(range(int(start), int(end)+1))
+    return containerlist
 
 def terminal(cpid):
     #myval = ["sudo","nsenter","-m","-u","-n","-i","-p","-t", cpid]
@@ -122,7 +124,7 @@ def getcontainer(cdetails):
     """returns valid list of container IDs"""
     print " "
     stopcontainers = raw_input("Which Container(s)?: ")
-    stopcontainers = in2list(stopcontainers)
+    stopcontainers = str2list(stopcontainers)
     if containerinrange(cdetails, stopcontainers) == False:
         return False
     for container in stopcontainers:
