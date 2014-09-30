@@ -5,6 +5,7 @@ import subprocess
 import json
 import urwid
 import re
+import time
 
 def getcontainerinfo(containeruids):
     cdetails = list ()
@@ -90,20 +91,41 @@ def terminal2(cpid):
 def getpid(containarray, mynum):
     return containarray[int(mynum)]['State']['Pid']
 
+def isRunning(containarray, mynum):
+    if (containarray[int(mynum)]['State']['Running']):
+        return True
+    else:
+        return False
+
 def returnuid(containarray, mynum):
     myuid = containarray[int(mynum)]['Id']
     return myuid[:8]
 
-def getcontainer():
+def containerinrange(cdetails, stopcontainers):
+    for i in stopcontainers:
+        foo = int(len(cdetails))
+        foo = foo -1
+        if (0 <= int(i) <= foo) == False:
+            print " "
+            print ("{0} isn't a valid container number...".format(i))
+            time.sleep(2)
+            return False
+    return True
+
+def getcontainer(cdetails):
     """returns valid list of container IDs"""
     print " "
     stopcontainers = raw_input("Which Container(s)?: ")
     stopcontainers = in2list(stopcontainers)
+    if containerinrange(cdetails, stopcontainers) == False:
+        return False
     for container in stopcontainers:
         # FIXME: check if it's valid integer
         if not(isInt(container)):
             print " "
             print ("{0} isn't a integer...".format(container))
+            time.sleep(2)
+            return False
         else:
             return stopcontainers
 
@@ -128,7 +150,7 @@ def printsummary():
     if containernum.upper() == "Q":
         quit()
     if containernum.upper() == "S":
-        stopcontainer = getcontainer()
+        stopcontainer = getcontainer(cdetails)
         for container in stopcontainer:
             try:
                 cid = returnuid(cdetails, container)
@@ -141,7 +163,7 @@ def printsummary():
         printsummary()
 
     if containernum.upper() == "D":
-       delcontainer = getcontainer()
+       delcontainer = getcontainer(cdetails)
        for container in delcontainer:
            try:
                cid = returnuid(cdetails, container)
@@ -153,13 +175,18 @@ def printsummary():
        printsummary()
 
     if containernum.upper() == "P":
-        peekcontainer = getcontainer()
-        for container in peekcontainer:
-            cpid = getpid(cdetails, container)
-            print "Entering container %s" % returnuid(cdetails, container)
-            foo = terminal2(cpid)
+        peekcontainer = getcontainer(cdetails)
+        if peekcontainer != False:
+            for container in peekcontainer:
+                if not isRunning(cdetails, container):
+                    print " "
+                    print ("{0} is not a running container".format(returnuid(cdetails, container)))
+                    time.sleep(2)
+                    printsummary()
+                cpid = getpid(cdetails, container)
+                print "Entering container %s" % returnuid(cdetails, container)
+                foo = terminal2(cpid)
         printsummary()
-
     else:
         printsummary()
 
