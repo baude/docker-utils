@@ -12,10 +12,10 @@ Provides a way to specify how an image should be run. A set of utilities to simp
 
 ## Utilities
 
-###runningtojson.py
+###docker-createjson.py
 Creates a json file describing the running container.
 
-`./runningtojson.py <docker_container_id>`
+`./docker-createjson.py <docker_container_id>`
 
 ### docker-wrapper.py
 Takes the json file from runningtojson.py and runs a container with the specified `docker run` parameters.
