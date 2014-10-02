@@ -20,6 +20,10 @@ def main():
     create_parser.add_argument('-f', '--force',
                        action='store_true',
                        help='Overwrite existing metadata file. Defaults to false.')
+    list_parser = subparsers.add_parser('list', help='List local metadata files')
+    list_parser.add_argument('-l', '--local',
+                       action='store_true',
+                       help='List only files in current working directory')
 
     args = parser.parse_args()
 
@@ -34,6 +38,11 @@ def main():
         # TODO: use kwargs
         create = metadata.Create(args.cuid, args.outfile, args.force)
         create.metadata_file()
+    elif args.action in "list":
+        import metadata
+        # TODO: use kwargs
+        filelist = metadata.List(args.local)
+        filelist.metadata_files()
 
 if __name__ == '__main__':
     main()

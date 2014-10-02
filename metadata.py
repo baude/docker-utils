@@ -1,4 +1,4 @@
-import os.path
+import os
 import subprocess
 import json
 import re
@@ -97,3 +97,17 @@ class Create(object):
 
         vals = self.assembledict(newconfig, configkeys, dockjson)
         self.writeoutput(vals)
+
+class List(object):
+    def __init__(self, local):
+        self.local = local
+        self.templates_dir = "/var/container-templates/"
+        self.pattern = 'json$'
+
+    def metadata_files(self):
+        dirlist = [self.templates_dir]
+        if self.local:
+            dirlist.append('.')
+        files = [f for d in dirlist for f in os.listdir(d) if re.search(self.pattern, f)]
+        for f in files:
+            print f

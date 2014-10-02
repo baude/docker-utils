@@ -26,6 +26,15 @@ Run an image based on metadata:
 docker run myapp
 12b3fff309c3
 ```
+List metadata files in `/var/container-templates/`. Include current working directory if `--local`:
+```
+./container-template.py list --local
+foo.json
+bar.json
+myapp.json
+82f000691b9a.json
+dd4281fb5f25.json
+```
 
 ### docker-dash.py
 A terminal dashboard to stop, delete and enter running containers. Accepts comma- or space-speparated lists for all commands.
