@@ -94,7 +94,7 @@ class Create(object):
         newhost = dict
 
         configkeys = {'Config': {'AttachStderr', 'AttachStdin', 'AttachStdout',
-                                 'CpuShares', 'Cpuset', 'Env', 'Hostname',
+                                 'Cmd', 'CpuShares', 'Cpuset', 'Env', 'Hostname',
                                  'Image', 'Memory', 'Tty', 'User', 'WorkingDir'
                                  },
                       'HostConfig': {'Binds', 'CapAdd', 'CapDrop', 'ContainerIDFile', 'Dns',

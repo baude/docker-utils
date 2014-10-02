@@ -85,6 +85,10 @@ class Run(object):
             newdict['publish'] = pbind
             del mydict['PortBindings']
 
+        # Grab the docker CMD
+        newdict['dockercommand'] = mydict['Cmd'][0]
+        del mydict['Cmd']
+
         # Push left over values to newdict
         for keys in mydict.keys():
             if keys in keymap:
@@ -121,14 +125,15 @@ class Run(object):
 
 
     def dockerrun(self, params, image, containername):
-
+        dockercmd = params['dockercommand']
+        del params['dockercommand']
         dockerargs = self.dockerparamform(params)
         if self.remove == True:
             dockerargs = dockerargs + ("{0}".format("--rm "))
         dockerargs = dockerargs + ("--name={0}".format(containername))
-        print "docker %s %s %s" % (self.dockercommand, dockerargs, image)
+        print "docker %s %s %s %s" % (self.dockercommand, dockerargs, image, dockercmd)
         print ""
-        os.system("docker %s %s %s" % (self.dockercommand, dockerargs, image))
+        os.system("docker %s %s %s %s" % (self.dockercommand, dockerargs, image, dockercmd))
 
 
     def containernameexists(self, name):
@@ -151,9 +156,9 @@ class Run(object):
     def start_container(self):
         # Need to interpose dictionary values into usable commands
         params = self.load_json()
-        print params
         image = params[0]['Config']['Image']
         del params[0]['Config']['Image']
+        dockercommand = params[0]['Config']['Cmd']
         foobar, containername = self.stripParams(params)
         if (self.containernameexists(containername)):
             print ("\n{0} already exists as a container name and cannot be reused".format(containername))
