@@ -12,15 +12,20 @@ Provides a way to specify how an image should be run. A set of utilities to simp
 
 ## Utilities
 
-###docker-createjson.py
-Creates a json file describing the running container.
+### container-template.py
+Generates docker run metadata (json) and runs containers based on that metadata.
 
-`./docker-createjson.py <docker_container_id>`
-
-### docker-wrapper.py
-Takes the json file from runningtojson.py and runs a container with the specified `docker run` parameters.
-
-`./docker-wrapper.py <output_from_runningtojson.json>`
+Create run metadata:
+```
+./container-template.py create <docker_container_id> [--force][--oufile myapp.json]
+Wrote myapp.json
+```
+Run an image based on metadata:
+```
+./container-template.py run myapp.json
+docker run myapp
+12b3fff309c3
+```
 
 ### docker-dash.py
 A terminal dashboard to stop, delete and enter running containers. Accepts comma- or space-speparated lists for all commands.

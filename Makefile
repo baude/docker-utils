@@ -4,7 +4,7 @@ SHELL = /bin/sh
 PREFIX = /usr
 BINDIR = $(PREFIX)/bin
  
-objects = docker-dash.py docker-wrapper.py docker-createjson.py
+objects = docker-dash.py container-template.py docker_wrapper.py metadata.py
 TARGET = $(objects)
 
 
