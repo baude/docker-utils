@@ -73,7 +73,7 @@ class Run(object):
             print ""
             pbind = []
             for k,v in mydict['PortBindings'].iteritems():
-                containerport = self.mystringreplace(mystringreplace(k,"/tcp"),"/udp")
+                containerport = self.mystringreplace(self.mystringreplace(k,"/tcp"),"/udp")
                 if v[0]['HostIp'] == "":
                     #pbind.append(("{0}::{1}".format(mydict['PortBindings'][k][0]['HostPort'])))
                     hostport = mydict['PortBindings'][k][0]['HostPort']

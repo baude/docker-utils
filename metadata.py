@@ -33,29 +33,21 @@ class Create(object):
         return mydict
 
 
-    def checkcontaineruid(self, cuid):
+    def checkcontaineruid(self):
         """Checks ID and returns valid containeruid. Accepts partial UID"""
         proc = subprocess.Popen(["docker ps -q"],
                                 stdout=subprocess.PIPE, shell=True)
         out = proc.stdout.read()
         containeruids = out.split()
-        if not len(cuid) >= 3:
+        if not len(self.cuid) >= 3:
             print "Container ID must be at least 3 characters"
             quit()
         else:
-            # FIXME: match code failing on first
-            #for containeruid in containeruids:
-            #    print containeruid
-            #    m = re.match(cuid, containeruid)
-            #    if m:
-            #        return containeruid
-            #    else:
-            #        print "Unable to find container ID '%s'. Try 'docker ps'." % cuid
-            #        quit()
-            if cuid in containeruids:
-                return cuid
+            match = [containeruid for containeruid in containeruids if re.match(self.cuid, containeruid)]
+            if match:
+                 return match[0]
             else:
-                print "Unable to find container ID '%s'. Try 'docker ps'." % cuid
+                print "Unable to find container ID '%s'. Try 'docker ps'." % self.cuid
                 quit()
 
     def writeoutput(self, vals):
@@ -78,13 +70,13 @@ class Create(object):
         return out
 
     def metadata_file(self):
-        cuid = self.checkcontaineruid(self.cuid)
+        self.cuid = self.checkcontaineruid()
 
         # Do I need to check if they are running?
         # docker inspect works on images and contianers
         # check if cuid is in the 'docker ps -a' list?
 
-        mycommand = "docker inspect %s" % cuid
+        mycommand = "docker inspect %s" % self.cuid
         containerproc = subprocess.Popen([mycommand],
                                          stdout=subprocess.PIPE, shell=True)
         dockjson = json.loads(containerproc.stdout.read())[0]
