@@ -36,6 +36,19 @@ myapp.json
 dd4281fb5f25.json
 ```
 
+Pull a metadata file from a remote source:
+```
+./container-template.py pull http://example.com/myapp.json
+Wrote myapp.json
+```
+Default filename is remote filename. Use `--output mycoolapp.json` to override default.
+
+Files are written to current working directory. Use `--install` to write file to system directory `/var/container-templates`.
+```
+./container-template.py pull http://example.com/myapp.json --install
+Wrote /var/container-templates/myapp.json
+```
+
 ### docker-dash.py
 A terminal dashboard to stop, delete and enter running containers. Accepts comma- or space-speparated lists for all commands.
 
