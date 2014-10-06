@@ -20,6 +20,22 @@ def main():
     create_parser.add_argument('-f', '--force',
                        action='store_true',
                        help='Overwrite existing metadata file. Defaults to false.')
+    list_parser = subparsers.add_parser('list', help='List local metadata files')
+    list_parser.add_argument('-l', '--local',
+                       action='store_true',
+                       help='List only files in current working directory')
+    pull_parser = subparsers.add_parser('pull', help='Pull metadata files from a remote source')
+    pull_parser.add_argument('url',
+                       metavar='http://example.com/my-app.json',
+                       help='Full URL of remote metadata file')
+    pull_parser.add_argument('-o', '--outfile',
+                       help='Specify metadata output filename')
+    pull_parser.add_argument('-i', '--install',
+                       action='store_true',
+                       help='Install file in the system templates directory.')
+    pull_parser.add_argument('-f', '--force',
+                       action='store_true',
+                       help='Overwrite existing metadata file. Defaults to false.')
 
     args = parser.parse_args()
 
@@ -34,6 +50,15 @@ def main():
         # TODO: use kwargs
         create = metadata.Create(args.cuid, args.outfile, args.force)
         create.metadata_file()
+    elif args.action in "list":
+        import metadata
+        # TODO: use kwargs
+        filelist = metadata.List(args.local)
+        filelist.metadata_files()
+    elif args.action in "pull":
+        import metadata
+        fetch = metadata.Pull(args.outfile, args.install, args.force)
+        fetch.pull_url(args.url)
 
 if __name__ == '__main__':
     main()
