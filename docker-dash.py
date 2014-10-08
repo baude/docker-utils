@@ -3,7 +3,6 @@
 import os
 import subprocess
 import json
-import urwid
 import time
 
 def getcontainerinfo(containeruids):
@@ -48,42 +47,6 @@ def str2list(inlist):
         containerlist.extend(range(int(start), int(end)+1))
     return containerlist
 
-def terminal(cpid):
-    #myval = ["sudo","nsenter","-m","-u","-n","-i","-p","-t", cpid]
-    #myval = ["ls], [\-l"]
-    myval = ["ls && sleep(5)"]
-    #term = urwid.Terminal(myval)
-    term = urwid.Terminal(None)
-
-    #myval = ("sudo nsenter -m -u -n -i -p -t {0} /bin/bash".format(cpid))
-    mainframe = urwid.LineBox(
-        urwid.Pile([
-            ('weight', 70, term),
-            ('fixed', 1, urwid.Filler(urwid.Edit('focus test edit: '))),
-        ]),
-    )
-
-    def set_title(widget, title):
-        mainframe.set_title(title)
-
-    def quit(*args, **kwargs):
-        raise urwid.ExitMainLoop()
-
-    def handle_key(key):
-        if key in ('q', 'Q'):
-            quit()
-
-    urwid.connect_signal(term, 'title', set_title)
-    urwid.connect_signal(term, 'closed', quit)
-
-    loop = urwid.MainLoop(
-        mainframe,
-        handle_mouse=False,
-        unhandled_input=handle_key)
-
-    term.main_loop = loop
-    term.command = myval
-    loop.run()
 
 def terminal2(cpid):
     nsenter = ('sudo nsenter -m -u -n -i -p -t {0} /bin/bash'.format(cpid))
