@@ -20,10 +20,10 @@ def main():
     create_parser.add_argument('-f', '--force',
                        action='store_true',
                        help='Overwrite existing metadata file. Defaults to false.')
-    list_parser = subparsers.add_parser('list', help='List local metadata files')
+    list_parser = subparsers.add_parser('list', help='List template files on host')
     list_parser.add_argument('-l', '--local',
                        action='store_true',
-                       help='List only files in current working directory')
+                       help='Include template files in current working directory')
     pull_parser = subparsers.add_parser('pull', help='Pull metadata files from a remote source')
     pull_parser.add_argument('url',
                        metavar='http://example.com/my-app.json',
