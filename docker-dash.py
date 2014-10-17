@@ -4,8 +4,20 @@ import os
 import subprocess
 import json
 import time
+import argparse
+import threading
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-a", "--all", help="Work with non-active containers too", action="store_true")
+args = parser.parse_args()
+
+if args.all:
+    print "View all containers"
 
 def getcontainerinfo(containeruids):
+    """ This function takes an array of of container uids and
+    returns an array of dicts with the inspect info
+    """
     cdetails = list ()
     for containers in containeruids:
         mycommand = "docker inspect %s" % containers
@@ -14,9 +26,11 @@ def getcontainerinfo(containeruids):
     return cdetails
 
 def getsummary(containerinfo):
-    #chostname = containerinfo['Config']['Hostname']
+    """
+    This function takes a container and returns its run state
+    """
+
     cuid = containerinfo['Id']
-    #ccmd = containerinfo['HostConfig']['Cmd']
     cimage = containerinfo['Config']['Image']
     if containerinfo['State']['Running'] == 1:
         crun = "Running"
@@ -49,6 +63,10 @@ def str2list(inlist):
 
 
 def terminal2(cpid):
+    """
+    This function takes a pid of a running container and opens it in 
+    xterm if its available
+    """
     nsenter = ('sudo nsenter -m -u -n -i -p -t {0} /bin/bash'.format(cpid))
     import pty
     import os
@@ -103,15 +121,24 @@ def getcontainer(cdetails):
 
 def printsummary():
     print " "
-    proc = subprocess.Popen(["docker ps -qa"], stdout=subprocess.PIPE, shell=True)
+   
+    dockercmd = ["docker", "ps"]
+    if args.all:
+        dockall = "-qa"
+    else:
+        dockall = "-q"
+    dockercmd.append(dockall)
+    proc = subprocess.Popen(dockercmd, stdout=subprocess.PIPE )
     out = proc.stdout.read()
     containeruids = out.split()
     cdetails = getcontainerinfo(containeruids)
-    print ('{0:2} {1:12} {2:15} {3:8}'.format("#", "ID","Image","Status"))
-    for s in range(len(cdetails)):
-        chostname, cimage, crun = getsummary(cdetails[s])
-        print ('{0:2} {1:12} {2:15} {3:8}'.format(s, chostname, cimage, crun))
-
+    if len(cdetails) != 0:
+        print ('{0:2} {1:12} {2:15} {3:8}'.format("#", "ID","Image","Status"))
+        for s in range(len(cdetails)):
+            chostname, cimage, crun = getsummary(cdetails[s])
+            print ('{0:2} {1:12} {2:15} {3:8}'.format(s, chostname, cimage, crun))
+    else:
+        print "No active containers ..."
     print " "
     print "Command Reference: (q)uit (r)efresh (s)top (d)elete (p)eek"
     print " "
@@ -122,15 +149,20 @@ def printsummary():
         quit()
     if containernum.upper() == "S":
         stopcontainer = getcontainer(cdetails)
+        stopthreads = []
         for container in stopcontainer:
-            try:
-                cid = returnuid(cdetails, container)
-                print "Stopping %s" % cid
-                myval = ("docker stop {0}".format(cid))
-                stopprocess = subprocess.Popen([myval], stdout=subprocess.PIPE, shell=True)
-
-            except:
-                print "Unable to find that container..."
+            cid = returnuid(cdetails, container)
+            if not isRunning(cdetails, container):
+                print "%s is not running" % cid
+                time.sleep(1)
+                break
+            cpid = getpid(cdetails, container)
+            myval = ("docker stop {0}".format(cid))
+            t = threading.Thread(target=stopcontainers, args=(myval, cpid,))
+            stopthreads.append(t)
+            t.start()
+        print "Waiting for containers to stop"
+        [x.join() for x in stopthreads]
         printsummary()
 
     if containernum.upper() == "D":
@@ -160,6 +192,10 @@ def printsummary():
         printsummary()
     else:
         printsummary()
+
+def stopcontainers(myval, cpid):
+    stopprocess = subprocess.call([myval], stdout=subprocess.PIPE, shell=True)
+    lambda: os.waitpid(cpid,0)
 
 if __name__ == '__main__':
     printsummary()
