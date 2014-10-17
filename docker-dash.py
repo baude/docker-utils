@@ -94,6 +94,11 @@ def containerinrange(cdetails, stopcontainers):
     for i in stopcontainers:
         foo = int(len(cdetails))
         foo = foo -1
+        if not(isInt(i)):
+            print " "
+            print ("{0} isn't a integer...".format(i))
+            time.sleep(2)
+            return False
         if (0 <= int(i) <= foo) == False:
             print " "
             print ("{0} isn't a valid container number...".format(i))
@@ -108,15 +113,7 @@ def getcontainer(cdetails):
     stopcontainers = str2list(stopcontainers)
     if containerinrange(cdetails, stopcontainers) == False:
         return False
-    for container in stopcontainers:
-        # FIXME: check if it's valid integer
-        if not(isInt(container)):
-            print " "
-            print ("{0} isn't a integer...".format(container))
-            time.sleep(2)
-            return False
-        else:
-            return stopcontainers
+    return stopcontainers
 
 
 def printsummary():
