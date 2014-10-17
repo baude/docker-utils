@@ -130,10 +130,10 @@ def printsummary():
     containeruids = out.split()
     cdetails = getcontainerinfo(containeruids)
     if len(cdetails) != 0:
-        print ('{0:2} {1:12} {2:15} {3:8}'.format("#", "ID","Image","Status"))
+        print ('{0:2} {1:12} {2:25} {3:8}'.format(" #", "ID","Image","Status"))
         for s in range(len(cdetails)):
             chostname, cimage, crun = getsummary(cdetails[s])
-            print ('{0:2} {1:12} {2:15} {3:8}'.format(s, chostname, cimage, crun))
+            print ('{0:2} {1:12} {2:25} {3:8}'.format(s, chostname, cimage, crun))
     else:
         print "No active containers ..."
     print " "
