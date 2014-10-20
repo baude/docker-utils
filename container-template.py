@@ -17,6 +17,9 @@ def main():
                        help='Container ID')
     create_parser.add_argument('-o', '--outfile',
                        help='Specify metadata output filename. Defaults to container ID.')
+    create_parser.add_argument('-k', '--kubernetes',
+                       action='store_true',
+                       help='Also create a kubernetes pod file')
     create_parser.add_argument('-f', '--force',
                        action='store_true',
                        help='Overwrite existing metadata file. Defaults to false.')
@@ -50,6 +53,8 @@ def main():
         # TODO: use kwargs
         create = metadata.Create(args.cuid, args.outfile, args.force)
         create.metadata_file()
+        if args.kubernetes:
+            create.kubernetes_file()
     elif args.action in "list":
         import metadata
         # TODO: use kwargs
