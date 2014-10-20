@@ -11,6 +11,8 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-a", "--all", help="Work with non-active containers too", action="store_true")
 args = parser.parse_args()
 
+allcontains = False
+
 if args.all:
     print "View all containers"
 
@@ -115,15 +117,20 @@ def getcontainer(cdetails):
         return False
     return stopcontainers
 
-
-def printsummary():
-    print " "
-   
-    dockercmd = ["docker", "ps"]
+def showall(allcontains):
     if args.all:
+        dockall = "-qa"
+    elif allcontains == True:
         dockall = "-qa"
     else:
         dockall = "-q"
+    return dockall
+
+def printsummary():
+    global allcontains
+    print " "
+    dockercmd = ["docker", "ps"]
+    dockall = showall(allcontains)
     dockercmd.append(dockall)
     proc = subprocess.Popen(dockercmd, stdout=subprocess.PIPE )
     out = proc.stdout.read()
@@ -137,9 +144,15 @@ def printsummary():
     else:
         print "No active containers ..."
     print " "
-    print "Command Reference: (q)uit (r)efresh (s)top (d)elete (p)eek"
+    print "GUI Reference: (q)uit (r)efresh show (a)ll"
+    print "Container Reference: (s)top (d)elete (p)eek"
     print " "
     containernum = raw_input("Command: ")
+    if containernum.upper() == "A":
+        if allcontains == True:
+            allcontains = False
+        else:
+            allcontains = True
     if containernum.upper() == "R":
         printsummary()
     if containernum.upper() == "Q":
