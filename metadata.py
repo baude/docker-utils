@@ -69,7 +69,8 @@ class Create(object):
             out = "{0}.json".format(self.cuid)
         return out
 
-    def metadata_file(self):
+    @property
+    def container_json(self):
         self.cuid = self.checkcontaineruid()
 
         # Do I need to check if they are running?
@@ -79,8 +80,10 @@ class Create(object):
         mycommand = "docker inspect %s" % self.cuid
         containerproc = subprocess.Popen([mycommand],
                                          stdout=subprocess.PIPE, shell=True)
-        dockjson = json.loads(containerproc.stdout.read())[0]
+        return json.loads(containerproc.stdout.read())[0]
 
+    def metadata_file(self):
+        dockjson = self.container_json
         newjson = dict
         newconfig = []
         newhost = dict
@@ -97,6 +100,56 @@ class Create(object):
 
         vals = self.assembledict(newconfig, configkeys, dockjson)
         self.writeoutput(vals)
+
+    def kubernetes_file(self):
+        _kube = self.outname.replace('.json', '-pod.json')
+        _schema = self.kube_schema
+        _schema.update({"id": "foobar"})
+        #print json.dumps(_schema, indent=2, sort_keys=False)
+        print "Wrote kube file %s" % _kube
+        #def assembledict(self, mydict, mykeys, dockjson):
+        #    userdict = {'UserParams': {'restart': '', 'rm': '' , 'dockercommand': '',
+        #                             'sig-proxy':''
+        #                            }}
+        #    for desc in mykeys:
+        #        newdict = {desc: {}}
+        #        for keys in mykeys[desc]:
+        #            newdict[desc][keys] = dockjson[desc][keys]
+        #        mydict.append(newdict)
+        #    if dockjson['Name'] != "":
+        #        namedict = {'Name': dockjson['Name'] }
+        #        mydict.append(namedict)
+        #    mydict.append(userdict)
+        #    return mydict
+
+    @property
+    def kube_schema(self):
+        kube = {
+            "kind": "Pod",
+            "id": None,
+            "apiVersion": "v1beta1",
+            "namespace": None,
+            "creationTimestamp": None,
+            "selfLink": None,
+            "desiredState": {
+                "manifest": {
+                    "version": "v1beta1",
+                    "id": None,
+                    "containers": [{
+                        "name": None,
+                        "image": None,
+                        "ports": [{
+                            "containerPort": 6379,
+                            "hostPort": 6379
+                        }]
+                    }]
+                }
+            },
+            "labels": {
+                "name": None
+            }
+        }
+        return kube
 
 class List(object):
     def __init__(self, local):
