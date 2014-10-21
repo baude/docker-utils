@@ -6,6 +6,7 @@ import json
 import time
 import argparse
 import threading
+import string
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-a", "--all", help="Work with non-active containers too", action="store_true")
@@ -16,16 +17,18 @@ allcontains = False
 if args.all:
     print "View all containers"
 
+
 def getcontainerinfo(containeruids):
     """ This function takes an array of of container uids and
     returns an array of dicts with the inspect info
     """
-    cdetails = list ()
+    cdetails = list()
     for containers in containeruids:
         mycommand = "docker inspect %s" % containers
         containerproc = subprocess.Popen([mycommand], stdout=subprocess.PIPE, shell=True)
         cdetails.append(json.loads(containerproc.stdout.read())[0])
     return cdetails
+
 
 def getsummary(containerinfo):
     """
@@ -41,12 +44,17 @@ def getsummary(containerinfo):
     return cuid[:8], cimage, crun
 
 
+def getimage(containerinfo):
+    return string.replace(containerinfo[0]['Config']['Image'], "/", "")
+
+
 def isInt(mystr):
     try:
         int(mystr)
         return True
     except ValueError:
         return False
+
 
 def str2list(inlist):
     """Converts input string into valid list
@@ -144,8 +152,8 @@ def printsummary():
     else:
         print "No active containers ..."
     print " "
-    print "GUI Reference: (q)uit (r)efresh show (a)ll"
-    print "Container Reference: (s)top (d)elete (p)eek"
+    print "GUI Reference: (q)uit (re)fresh show (a)ll"
+    print "Container Reference: (r)un (s)top (d)elete (p)eek"
     print " "
     containernum = raw_input("Command: ")
     if containernum.upper() == "A":
@@ -153,7 +161,7 @@ def printsummary():
             allcontains = False
         else:
             allcontains = True
-    if containernum.upper() == "R":
+    if containernum.upper() == "x":
         printsummary()
     if containernum.upper() == "Q":
         quit()
@@ -174,6 +182,25 @@ def printsummary():
         print "Waiting for containers to stop"
         [x.join() for x in stopthreads]
         printsummary()
+
+    if containernum.upper() == "R":
+        startthreads = []
+        runcontainer = getcontainer(cdetails)
+        for container in runcontainer:
+            cid = returnuid(cdetails, container)
+            cdetails = getcontainerinfo(containeruids)
+            if isRunning(cdetails, container):
+                print "%s is already running" % cid
+                time.sleep(1)
+                break
+            myval = ("docker start {0}".format(cid))
+            t = threading.Thread(target=startcontainers, args=(myval,))
+            startthreads.append(t)
+            t.start()
+        print "Waiting for containers to start"
+        [x.join() for x in startthreads]
+        printsummary()
+
 
     if containernum.upper() == "D":
        delcontainer = getcontainer(cdetails)
@@ -206,6 +233,9 @@ def printsummary():
 def stopcontainers(myval, cpid):
     stopprocess = subprocess.call([myval], stdout=subprocess.PIPE, shell=True)
     lambda: os.waitpid(cpid,0)
+
+def startcontainers(myval):
+    subprocess.call([myval], stdout=subprocess.PIPE, shell=True )
 
 if __name__ == '__main__':
     printsummary()
