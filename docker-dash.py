@@ -105,7 +105,7 @@ def getpid(cid):
 
 
 def isRunning(containarray, mynum):
-    print containarray
+    #print containarray
     #if (containarray[int(mynum)]['State']['Running']):
     if 'Up' in  (containarray[int(mynum)]['Status']):
         return True
@@ -368,9 +368,9 @@ def printsummary2():
                 time.sleep(1)
                 break
             cpid = getpid(cid)
-            print "-----------------"
-            print cpid
-            print "-----------------"
+            #print "-----------------"
+            #print cpid
+            #print "-----------------"
             t = threading.Thread(target=stopcontainers, args=(cid, cpid,))
             
             stopthreads.append(t)
