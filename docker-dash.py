@@ -7,16 +7,26 @@ import time
 import argparse
 import threading
 import string
+import docker
+
+dellist = []
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-a", "--all", help="Work with non-active containers too", action="store_true")
+parser.add_argument("-i", "--images", help="Jump into the images interface", action="store_true")
+
 args = parser.parse_args()
 
 allcontains = False
+if args.images:
+    myscreen = "images"
+else:
+    myscreen = "containers"
+
 
 if args.all:
     print "View all containers"
-
+    allcontains = True
 
 def getcontainerinfo(containeruids):
     """ This function takes an array of of container uids and
@@ -24,24 +34,25 @@ def getcontainerinfo(containeruids):
     """
     cdetails = list()
     for containers in containeruids:
-        mycommand = "docker inspect %s" % containers
-        containerproc = subprocess.Popen([mycommand], stdout=subprocess.PIPE, shell=True)
-        cdetails.append(json.loads(containerproc.stdout.read())[0])
+        #mycommand = "docker inspect %s" % containers
+        #containerproc = subprocess.Popen([mycommand], stdout=subprocess.PIPE, shell=True)
+        #cdetails.append(json.loads(containerproc.stdout.read())[0])
+        cdetails.append(c.inspect_container(containers['Id']))
     return cdetails
 
 
-def getsummary(containerinfo):
+def getcontainersummary(containerinfo):
     """
     This function takes a container and returns its run state
     """
 
     cuid = containerinfo['Id']
-    cimage = containerinfo['Config']['Image']
-    if containerinfo['State']['Running'] == 1:
+    cimage = containerinfo['Image']
+    if 'Up' in containerinfo['Status']:
         crun = "Running"
     else:
         crun = "Not Running"
-    return cuid[:8], cimage, crun
+    return cuid[:8],  cimage, crun
 
 
 def getimage(containerinfo):
@@ -87,11 +98,16 @@ def terminal2(cpid):
         containerproc = subprocess.Popen([mycommand], stdout=subprocess.PIPE, shell=True)
         
 
-def getpid(containarray, mynum):
-    return containarray[int(mynum)]['State']['Pid']
+def getpid(cid):
+    #return containarray[int(mynum)]['State']['Pid']
+    cinspect = c.inspect_container(cid)
+    return cinspect['State']['Pid']
+
 
 def isRunning(containarray, mynum):
-    if (containarray[int(mynum)]['State']['Running']):
+    print containarray
+    #if (containarray[int(mynum)]['State']['Running']):
+    if 'Up' in  (containarray[int(mynum)]['Status']):
         return True
     else:
         return False
@@ -99,6 +115,13 @@ def isRunning(containarray, mynum):
 def returnuid(containarray, mynum):
     myuid = containarray[int(mynum)]['Id']
     return myuid[:8]
+
+def returnfulluid(iid):
+    i = c.images(name=None, quiet=False, all=True, viz=False)
+    for f in i:
+        if f['Id'].startswith(iid):
+            return f['Id']
+
 
 def containerinrange(cdetails, stopcontainers):
     for i in stopcontainers:
@@ -119,7 +142,8 @@ def containerinrange(cdetails, stopcontainers):
 def getcontainer(cdetails):
     """returns valid list of container IDs"""
     print " "
-    stopcontainers = raw_input("Which Container(s)?: ")
+    global myscreen
+    stopcontainers = raw_input("Which {0}(s)?: ".format(myscreen))
     stopcontainers = str2list(stopcontainers)
     if containerinrange(cdetails, stopcontainers) == False:
         return False
@@ -134,25 +158,136 @@ def showall(allcontains):
         dockall = "-q"
     return dockall
 
-def printsummary():
+
+def stopcontainers(cid, cpid):
+    print "went into stop......"
+    #stopprocess = subprocess.call([myval], stdout=subprocess.PIPE, shell=True)
+    stopprocess =  c.stop(cid, None)
+
+    lambda: os.waitpid(cpid,0)
+
+def startcontainers(cid):
+    c.start(cid)
+
+
+def convertsize(kbytes):
+    if kbytes > 1000000000:
+        ksize = str(round(float(kbytes / 1000000000),2)) + " GB"
+    else:
+        
+        ksize = str((int(kbytes / 1000000))) + " MB"
+
+    return ksize
+
+
+def findchild(imageid, images):
+    imagenode = []
+    for i in images:
+        if i['ParentId'] == imageid:
+            imagenode.append(i['Id'])
+    if len(imagenode) == 0:
+        # No more children
+        return False
+    elif len(imagenode) == 1:
+        return imagenode
+    else:
+        return imagenode
+
+def crawl(nodeid, images):
+    global dellist
+    imagechild = ""
+    imagechild = findchild(nodeid, images)
+    if imagechild is not False:
+        dellist.append(imagechild)
+        if type(imagechild) == list:
+               for i in imagechild:
+                   if crawl(i, images) is False:
+                      break 
+    return dellist
+
+def deleteimage(iid):
+    if type(iid) == list:
+        for i in iid:
+            deleteimage(i)
+    else:
+        print "Deleting {0}".format(iid)
+
+
+def printimagesummary():
+    global myscreen
     global allcontains
-    print " "
-    dockercmd = ["docker", "ps"]
+    myscreen = "images"
     dockall = showall(allcontains)
-    dockercmd.append(dockall)
-    proc = subprocess.Popen(dockercmd, stdout=subprocess.PIPE )
-    out = proc.stdout.read()
-    containeruids = out.split()
-    cdetails = getcontainerinfo(containeruids)
-    if len(cdetails) != 0:
+    images = c.images(name=None, quiet=False, all=allcontains, viz=False)
+    # Map is: Created, VirtualSize, RepoTags[], Id 
+    print 
+    if len(images) > 1:
+        print ('{0:2} {1:20} {2:10} {3:18} {4:8}'.format(" #", "Repo",  "Image ID ","Created", "Size"))
+        for s in range(len(images)):
+            imagedesc = images[s]['RepoTags'][0].split(':')[0]
+            if len(images[s]['RepoTags']) > 1:
+                imagedesc = imagedesc + ":" + images[s]['RepoTags'][0].split(':')[1]
+            created = time.strftime("%d %b %y %H:%M",time.localtime(images[s]['Created']))
+            isize = convertsize(float(images[s]['VirtualSize']))
+            print ('{0:2} {1:20} {2:10} {3:18} {4:8}'.format(s, imagedesc, images[s]['Id'][:8], created, isize))
+    else:
+        print "No images ..."
+    print " "
+    print "GUI Reference: (c) containers (q)uit (re)fresh"
+    print "Image Reference: (r)un (d)elete (p)eek"
+    print " "
+    containernum = raw_input("Command: ")
+    if containernum.upper() == "A":
+        if allcontains == True:
+            allcontains = False
+        else:
+            allcontains = True
+        printimagesummary()
+    if containernum.upper() == "RE":
+        printimagesummary()
+    if containernum.upper() == "C":
+        printsummary2()
+    if containernum.upper() == "Q":
+        quit()
+    if containernum.upper() == "D":
+        global dellist
+        delimages = getcontainer(images)
+        allimages = c.images(name=None, quiet=False, all=True, viz=False)
+        for d in delimages:
+            imagelist = []
+            iid = images[int(d)]['Id']
+            dellist.append(iid)
+            imagelist = crawl(iid, allimages)
+            for i in reversed(imagelist):
+                deleteimage(i)
+            del imagelist[:]
+        printimagesummary()
+
+
+def getimagesummary(iuid):
+    """
+    This function takes a container and returns its run state
+    """
+    
+    cuid = containerinfo['Id']
+    cimage = containerinfo['Config']['Image']
+    return cuid[:8], cimage, crun
+
+def printsummary2():
+    print "hello"
+    global allcontains
+    print allcontains
+    #dockall = showall(allcontains)
+    mycontainers = c.containers(quiet=False, all=allcontains, trunc=True, latest=False, since=None, before=None, limit=-1)
+    if len(mycontainers) != 0:
         print ('{0:2} {1:12} {2:25} {3:8}'.format(" #", "ID","Image","Status"))
-        for s in range(len(cdetails)):
-            chostname, cimage, crun = getsummary(cdetails[s])
+        for s in range(len(mycontainers)):
+            chostname, cimage, crun = getcontainersummary(mycontainers[s])
             print ('{0:2} {1:12} {2:25} {3:8}'.format(s, chostname, cimage, crun))
     else:
         print "No active containers ..."
     print " "
-    print "GUI Reference: (q)uit (re)fresh show (a)ll"
+    print "GUI Reference: (q)uit (i)mages (re)fresh show (a)ll"
     print "Container Reference: (r)un (s)top (d)elete (p)eek"
     print " "
     containernum = raw_input("Command: ")
@@ -161,81 +296,90 @@ def printsummary():
             allcontains = False
         else:
             allcontains = True
+        printsummary2()
+    if containernum.upper() == "I":
+        printimagesummary()
     if containernum.upper() == "x":
-        printsummary()
+        printsummary2()
     if containernum.upper() == "Q":
         quit()
     if containernum.upper() == "S":
-        stopcontainer = getcontainer(cdetails)
+        stopcontainer = getcontainer(mycontainers)
         stopthreads = []
         for container in stopcontainer:
-            cid = returnuid(cdetails, container)
-            if not isRunning(cdetails, container):
+            cid = returnuid(mycontainers, container)
+            if not isRunning(mycontainers, container):
                 print "%s is not running" % cid
                 time.sleep(1)
                 break
-            cpid = getpid(cdetails, container)
-            myval = ("docker stop {0}".format(cid))
-            t = threading.Thread(target=stopcontainers, args=(myval, cpid,))
+            cpid = getpid(cid)
+            print "-----------------"
+            print cpid
+            print "-----------------"
+            t = threading.Thread(target=stopcontainers, args=(cid, cpid,))
+            
             stopthreads.append(t)
             t.start()
         print "Waiting for containers to stop"
         [x.join() for x in stopthreads]
-        printsummary()
+        printsummary2()
 
     if containernum.upper() == "R":
         startthreads = []
-        runcontainer = getcontainer(cdetails)
+        runcontainer = getcontainer(mycontainers)
         for container in runcontainer:
-            cid = returnuid(cdetails, container)
-            cdetails = getcontainerinfo(containeruids)
-            if isRunning(cdetails, container):
+            cid = returnuid(mycontainers, container)
+            cdetails = getcontainerinfo(mycontainers)
+            if isRunning(mycontainers, container):
                 print "%s is already running" % cid
                 time.sleep(1)
                 break
             myval = ("docker start {0}".format(cid))
-            t = threading.Thread(target=startcontainers, args=(myval,))
+            t = threading.Thread(target=startcontainers, args=(cid,))
             startthreads.append(t)
             t.start()
         print "Waiting for containers to start"
         [x.join() for x in startthreads]
-        printsummary()
-
+        printsummary2()
 
     if containernum.upper() == "D":
+       cdetails = getcontainerinfo(mycontainers)
        delcontainer = getcontainer(cdetails)
        for container in delcontainer:
            try:
-               cid = returnuid(cdetails, container)
+               cid = returnuid(mycontainers, container)
                print "Deleting %s" % cid
-               myval = ("docker rm {0}".format(cid))
-               delprocess = subprocess.Popen([myval], stdout=subprocess.PIPE, shell=True)
+               c.remove_container(cid, v=False, link=False)
            except:
                print "Unable to find that container ..."
-       printsummary()
+       printsummary2()
 
     if containernum.upper() == "P":
+        cdetails = getcontainerinfo(mycontainers)
         peekcontainer = getcontainer(cdetails)
         if peekcontainer != False:
             for container in peekcontainer:
-                if not isRunning(cdetails, container):
+                if not isRunning(mycontainers, container):
                     print " "
                     print ("{0} is not a running container".format(returnuid(cdetails, container)))
                     time.sleep(2)
-                    printsummary()
-                cpid = getpid(cdetails, container)
+                    printsummary2()
+                cid = returnuid(mycontainers, container)
+                cpid = getpid(cid)
                 print "Entering container %s" % returnuid(cdetails, container)
                 foo = terminal2(cpid)
-        printsummary()
+        printsummary2()
     else:
-        printsummary()
+        printsummary2() 
 
-def stopcontainers(myval, cpid):
-    stopprocess = subprocess.call([myval], stdout=subprocess.PIPE, shell=True)
-    lambda: os.waitpid(cpid,0)
-
-def startcontainers(myval):
-    subprocess.call([myval], stdout=subprocess.PIPE, shell=True )
 
 if __name__ == '__main__':
-    printsummary()
+    c = docker.Client(base_url='unix://var/run/docker.sock',
+                  version='1.12',
+                  timeout=10)
+    #myscreen="containers"
+
+    if myscreen == "containers":
+        printsummary2()
+    elif myscreen == "images":
+        printimagesummary()
