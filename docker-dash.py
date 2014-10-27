@@ -160,7 +160,7 @@ def showall(allcontains):
 
 
 def stopcontainers(cid, cpid):
-    print "went into stop......"
+    print "Stopping {0}".format(cid)
     #stopprocess = subprocess.call([myval], stdout=subprocess.PIPE, shell=True)
     stopprocess =  c.stop(cid, None)
 
@@ -211,6 +211,43 @@ def deleteimage(iid):
             deleteimage(i)
     else:
         print "Deleting {0}".format(iid)
+        c.remove_image(iid, noprune=True)
+        ##c.remove_image(iid)
+
+def deletecontainer(c, cid):
+    try:
+        print "Deleting %s" % cid
+        c.remove_container(cid, v=False, link=False)
+    except:
+        print "Unable to find that container ..."
+
+
+def checkforcontainers(imagelist, c):
+    delcontainers = []
+    mycontainers = c.containers(quiet=False, all=True, trunc=True, latest=False, since=None, before=None, limit=-1)
+    # Get all of the image inspect information
+    inspectinfo = []
+    for j in mycontainers:
+        myinspect = c.inspect_container(j['Id'])
+        inspectinfo.append(myinspect)
+
+    for i in imagelist:
+        if type(i) == list:
+            for s in i:
+                myid = s
+        else:
+            myid = i
+        for c in inspectinfo:
+            # print "{0} {1}".format(myid, c)
+            if c['Image'] == myid:
+                state = "Off"
+                if c['State']['Running'] == True:
+                    state="Running"
+
+                mydict = {'Id': c['Id'][:25], 'Image': c['Config']['Image'], 'Name': c['Name'], 'State': state, 'Pid': c['State']['Pid']}
+                delcontainers.append(mydict)
+
+    return delcontainers 
 
 
 def printimagesummary():
@@ -258,6 +295,24 @@ def printimagesummary():
             iid = images[int(d)]['Id']
             dellist.append(iid)
             imagelist = crawl(iid, allimages)
+            delcontainers = checkforcontainers(imagelist, c)
+            if delcontainers > 0:
+                print "The following containers would also be stopped and deleted."
+                print " "
+                for cons in delcontainers:
+                    print "{0:12} {1:15} {2:15} {3:10}".format(cons['Id'], cons['Image'], cons['Name'], cons['State'])
+                print " "
+                confirm = raw_input("Continue?  (y/n) : ")
+                if confirm.upper() == "Y":
+                    for dels in delcontainers:
+                        if dels['State'] == "Running":
+                            stopcontainers(dels['Id'], dels['Pid'])
+                        deletecontainer(c, dels['Id'])
+                else:
+                    print "Not deleting ..."
+                    time.sleep(2)
+                    printimagesummary()
+
             for i in reversed(imagelist):
                 deleteimage(i)
             del imagelist[:]
@@ -346,12 +401,13 @@ def printsummary2():
        cdetails = getcontainerinfo(mycontainers)
        delcontainer = getcontainer(cdetails)
        for container in delcontainer:
-           try:
-               cid = returnuid(mycontainers, container)
-               print "Deleting %s" % cid
-               c.remove_container(cid, v=False, link=False)
-           except:
-               print "Unable to find that container ..."
+            cid = returnuid(mycontainers, container)
+            deletecontainer(c,cid)
+          # try:
+          #     print "Deleting %s" % cid
+          #     c.remove_container(cid, v=False, link=False)
+          # except:
+          #     print "Unable to find that container ..."
        printsummary2()
 
     if containernum.upper() == "P":
