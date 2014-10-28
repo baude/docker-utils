@@ -33,22 +33,20 @@ def main():
                        help='Container ID')
     create_parser.add_argument('-o', '--outfile',
                        help='Specify metadata output filename. Defaults to container ID.')
+    create_parser.add_argument('-d', '--directory',
+                       help='Override default directory')
     create_parser.add_argument('-f', '--force',
                        action='store_true',
                        help='Overwrite existing metadata file. Defaults to false.')
     list_parser = subparsers.add_parser('list', help='List template files on host')
-    list_parser.add_argument('-l', '--local',
-                       action='store_true',
-                       help='Include template files in current working directory')
     pull_parser = subparsers.add_parser('pull', help='Pull metadata files from a remote source')
     pull_parser.add_argument('url',
                        metavar='http://example.com/my-app.json',
                        help='Full URL of remote metadata file')
     pull_parser.add_argument('-o', '--outfile',
                        help='Specify metadata output filename')
-    pull_parser.add_argument('-i', '--install',
-                       action='store_true',
-                       help='Install file in the system templates directory.')
+    pull_parser.add_argument('-d', '--directory',
+                       help='Override default directory')
     pull_parser.add_argument('-f', '--force',
                        action='store_true',
                        help='Overwrite existing metadata file. Defaults to false.')
@@ -57,23 +55,28 @@ def main():
 
     if args.action in "run":
         import docker_wrapper
-        # TODO: use kwargs
-        run = docker_wrapper.Run(args.action, args.json)
+        kwargs = {'command': args.action, 'jsonfile': args.json}
+        run = docker_wrapper.Run(**kwargs)
         run.start_container()
 
     elif args.action in "create":
         import metadata
-        # TODO: use kwargs
-        create = metadata.Create(args.cuid, args.outfile, args.force)
+        kwargs = {'cuid': args.cuid,
+                  'outfile': args.outfile,
+                  'directory': args.directory,
+                  'force': args.force}
+        create = metadata.Create(**kwargs)
         create.write_files()
     elif args.action in "list":
         import metadata
-        # TODO: use kwargs
-        filelist = metadata.List(args.local)
+        filelist = metadata.List()
         filelist.metadata_files()
     elif args.action in "pull":
         import metadata
-        fetch = metadata.Pull(args.outfile, args.install, args.force)
+        kwargs = {'outfile': args.outfile,
+                  'directory': args.directory,
+                  'force': args.force}
+        fetch = metadata.Pull(**kwargs)
         fetch.pull_url(args.url)
 
 if __name__ == '__main__':
