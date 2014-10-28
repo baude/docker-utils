@@ -22,10 +22,10 @@ import re
 from string import Template
 
 class Create(object):
-    def __init__(self, cuid, outfile, force):
-        self.cuid = cuid
-        self.force = force
-        self.outfile = outfile
+    def __init__(self, **kwargs):
+        self.cuid = kwargs['cuid']
+        self.force = kwargs['force']
+        self.outfile = kwargs['outfile']
 
     def outfileexists(self, outname):
         if os.path.isfile(outname):
@@ -207,11 +207,11 @@ class List(object):
             print f
 
 class Pull(object):
-    def __init__(self, outfile, install, force):
-        self.install = install
-        self.force = force
+    def __init__(self, **kwargs):
+        self.install = kwargs['install']
+        self.force = kwargs['force']
         self.templates_dir = "/var/container-templates"
-        self.outfile = outfile
+        self.outfile = kwargs['outfile']
         self.response = None
 
     def get_url_filename(self):

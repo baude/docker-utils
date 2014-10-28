@@ -24,9 +24,9 @@ import jsonschema
 import subprocess
 
 class Run(object):
-    def __init__(self, command, jsonfile):
-        self.dockercommand = command
-        self.jsonfile = jsonfile
+    def __init__(self, **kwargs):
+        self.dockercommand = kwargs['command']
+        self.jsonfile = kwargs['jsonfile']
         # FIXME
         self.remove = True
 

@@ -57,23 +57,23 @@ def main():
 
     if args.action in "run":
         import docker_wrapper
-        # TODO: use kwargs
-        run = docker_wrapper.Run(args.action, args.json)
+        kwargs = {'command': args.action, 'jsonfile': args.json}
+        run = docker_wrapper.Run(**kwargs)
         run.start_container()
 
     elif args.action in "create":
         import metadata
-        # TODO: use kwargs
-        create = metadata.Create(args.cuid, args.outfile, args.force)
+        kwargs = {'cuid': args.cuid, 'outfile': args.outfile, 'force': args.force}
+        create = metadata.Create(**kwargs)
         create.write_files()
     elif args.action in "list":
         import metadata
-        # TODO: use kwargs
         filelist = metadata.List(args.local)
         filelist.metadata_files()
     elif args.action in "pull":
         import metadata
-        fetch = metadata.Pull(args.outfile, args.install, args.force)
+        kwargs = {'outfile': args.outfile, 'install': args.install, 'force': args.force}
+        fetch = metadata.Pull(**kwargs)
         fetch.pull_url(args.url)
 
 if __name__ == '__main__':
