@@ -14,7 +14,6 @@ install:
 		install -D $$files $(BINDIR)/$$command; \
 		chmod 755 $(BINDIR)/$$command; \
 	done
-	install -D
 	mkdir -p $(DESTDIR)/var/container-template/system
 	mkdir $(DESTDIR)/var/container-template/user
 
