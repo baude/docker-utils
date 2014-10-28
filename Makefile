@@ -1,7 +1,7 @@
 SHELL = /bin/sh
- 
 
-PREFIX = /usr
+
+PREFIX = $(DESTDIR)/usr
 BINDIR = $(PREFIX)/bin
  
 objects = docker-dash.py container-template.py docker_wrapper.py metadata.py
@@ -14,9 +14,9 @@ install:
 		install -D $$files $(BINDIR)/$$command; \
 		chmod 755 $(BINDIR)/$$command; \
 	done
-
-	mkdir -p /var/container-template/system
-	mkdir /var/container-template/user
+	install -D
+	mkdir -p $(DESTDIR)/var/container-template/system
+	mkdir $(DESTDIR)/var/container-template/user
 
 uninstall: docker-dash.py
 	for files in $(objects); do \

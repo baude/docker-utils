@@ -1,0 +1,33 @@
+Summary: Docker utilities and tools
+Name: docker-utils
+Version: 2014.10
+Release: 1%{?dist}
+
+Source0: %{name}-%{version}.tar.xz
+License: LGPLv2+
+URL: https://github.com/baude/docker-utils
+
+Requires: python-docker
+
+%description
+Various utilities to interact with docker containers
+
+%prep
+%setup -q -n %{name}-%{version}
+
+%install
+echo %{buildroot}
+make install DESTDIR=%{buildroot} INSTALL="install -p"
+
+%files
+%doc COPYING README.md
+%{_bindir}/docker-dash
+%{_bindir}/docker_wrapper
+%{_bindir}/container-template
+%{_bindir}/metadata
+
+
+
+%changelog
+* Tue Oct 28 2014 Brent Baude <bbaude@redhat.com> - 2014.10.1
+- Initial Package
