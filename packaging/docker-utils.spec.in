@@ -18,6 +18,8 @@ Various utilities to interact with docker containers
 %install
 echo %{buildroot}
 make install DESTDIR=%{buildroot} INSTALL="install -p"
+mkdir -p %{buildroot}/%{_var}/container-template/user
+mkdir -p %{buildroot}/%{_var}/container-template/system
 
 %files
 %doc COPYING README.md
@@ -25,6 +27,9 @@ make install DESTDIR=%{buildroot} INSTALL="install -p"
 %{_bindir}/docker_wrapper
 %{_bindir}/container-template
 %{_bindir}/metadata
+%dir %{_var}/container-template
+%dir %{_var}/container-template/user
+%dir %{_var}/container-template/system
 
 
 
