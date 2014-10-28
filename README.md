@@ -8,8 +8,6 @@ Provides a way to specify how an image should be run. A set of utilities to simp
 ## installation
 `pip install -r requirements.txt`
 
-> NOTE: docker-dash.py requires python [urwid](http://excess.org/urwid/wiki/Installation)
-
 ## Utilities
 
 ### container-template.py
@@ -18,7 +16,9 @@ Generates docker run metadata (json) and runs containers based on that metadata.
 Create run metadata:
 ```
 ./container-template.py create <docker_container_id> [--force][--oufile myapp.json]
-Wrote myapp.json
+/var/container-template/user/myapp.json
+/var/container-template/user/myapp-pod.json
+/var/container-template/user/myapp.service
 ```
 Run an image based on metadata:
 ```
@@ -26,27 +26,25 @@ Run an image based on metadata:
 docker run myapp
 12b3fff309c3
 ```
-List metadata files in `/var/container-templates/`. Include current working directory if `--local`:
+List metadata files in `/var/container-template/*`.
 ```
-./container-template.py list --local
-foo.json
-bar.json
-myapp.json
-82f000691b9a.json
-dd4281fb5f25.json
+./container-template.py list
+/var/container-template/user/myapp.json
+/var/container-template/user/myapp-pod.json
+/var/container-template/user/myapp.service
 ```
 
 Pull a metadata file from a remote source:
 ```
 ./container-template.py pull http://example.com/myapp.json
-Wrote myapp.json
+/var/container-template/user/myapp.json
 ```
 Default filename is remote filename. Use `--output mycoolapp.json` to override default.
 
-Files are written to current working directory. Use `--install` to write file to system directory `/var/container-templates`.
+Files are written to `/var/container-template/user` by default. Use `--dir <custom/path>` to override. Directory `/var/container-template/system` is intended for "installed" system files.
 ```
-./container-template.py pull http://example.com/myapp.json --install
-Wrote /var/container-templates/myapp.json
+./container-template.py pull http://example.com/myapp.json
+/var/container-template/user/myapp.json
 ```
 
 ### docker-dash.py

@@ -21,11 +21,15 @@ import json
 import re
 from string import Template
 
+USER_TEMPLATE_DIR = "/var/container-template/user/"
+SYSTEM_TEMPLATE_DIR = "/var/container-template/system/"
+
 class Create(object):
     def __init__(self, **kwargs):
         self.cuid = kwargs['cuid']
         self.force = kwargs['force']
         self.outfile = kwargs['outfile']
+        self.directory = kwargs['directory']
 
     def outfileexists(self, outname):
         if os.path.isfile(outname):
@@ -71,6 +75,10 @@ class Create(object):
                 quit(1)
 
     def writeoutput(self, vals, outname, filetype="json"):
+        if not self.directory:
+            outname = USER_TEMPLATE_DIR + outname
+        else:
+            outname = self.directory + outname
         if (not self.force) and (self.outfileexists(outname)):
             print ("{0} already exists. Pass -f or --force to override".format(outname))
             quit(1)
@@ -193,24 +201,19 @@ WantedBy=multi-user.target
         self.sysd_unit_file()
 
 class List(object):
-    def __init__(self, local):
-        self.local = local
-        self.templates_dir = "/var/container-templates/"
-        self.pattern = 'json$'
+    def __init__(self):
+        self.pattern = 'service|json$'
 
     def metadata_files(self):
-        dirlist = [self.templates_dir]
-        if self.local:
-            dirlist.append('.')
-        files = [f for d in dirlist for f in os.listdir(d) if re.search(self.pattern, f)]
+        dirlist = [USER_TEMPLATE_DIR, SYSTEM_TEMPLATE_DIR]
+        files = [d + f for d in dirlist for f in os.listdir(d) if re.search(self.pattern, f)]
         for f in files:
             print f
 
 class Pull(object):
     def __init__(self, **kwargs):
-        self.install = kwargs['install']
         self.force = kwargs['force']
-        self.templates_dir = "/var/container-templates"
+        self.directory = kwargs['directory']
         self.outfile = kwargs['outfile']
         self.response = None
 
@@ -226,10 +229,10 @@ class Pull(object):
             filename = self.outfile
         else:
             filename = self.get_url_filename()
-        if self.install:
-            return "{0}/{1}".format(self.templates_dir, filename)
+        if not self.directory:
+            return "{0}/{1}".format(USER_TEMPLATE_DIR, filename)
         else:
-            return "{0}".format(filename)
+            return "{0}/{1}".format(self.directory, filename)
 
     def pull_url(self, url):
         from urllib2 import Request, urlopen, URLError
