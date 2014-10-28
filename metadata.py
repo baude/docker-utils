@@ -1,7 +1,25 @@
+# Copyright (C) 2014 Brent Baude <bbaude@redhat.com>, Aaron Weitekamp <aweiteka@redhat.com>
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+# Boston, MA 02111-1307, USA.
+
 import os
 import subprocess
 import json
 import re
+from string import Template
 
 class Create(object):
     def __init__(self, cuid, outfile, force):
@@ -9,18 +27,20 @@ class Create(object):
         self.force = force
         self.outfile = outfile
 
-    @property
-    def outfileexists(self):
-        if os.path.isfile(self.outname):
+    def outfileexists(self, outname):
+        if os.path.isfile(outname):
             return True
         else:
             return False
 
 
-    def assembledict(self, mydict, mykeys, dockjson):
+    def assembledict(self, mykeys, dockjson):
+        # not used
+        # instead of re-building the json, we take the whole thing
         userdict = {'UserParams': {'restart': '', 'rm': '' , 'dockercommand': '',
                                  'sig-proxy':''
                                 }}
+        mydict = []
         for desc in mykeys:
             newdict = {desc: {}}
             for keys in mykeys[desc]:
@@ -41,24 +61,26 @@ class Create(object):
         containeruids = out.split()
         if not len(self.cuid) >= 3:
             print "Container ID must be at least 3 characters"
-            quit()
+            quit(1)
         else:
             match = [containeruid for containeruid in containeruids if re.match(self.cuid, containeruid)]
             if match:
                  return match[0]
             else:
                 print "Unable to find container ID '%s'. Try 'docker ps'." % self.cuid
-                quit()
+                quit(1)
 
-    def writeoutput(self, vals):
-        if (not self.force) and (self.outfileexists):
-            print ("{0} already exists. You can pass \
-                   -f to override".format(self.outname))
-            quit()
-        with open(self.outname, "w") as outfile:
-            json.dump(vals, outfile, indent=4)
+    def writeoutput(self, vals, outname, filetype="json"):
+        if (not self.force) and (self.outfileexists(outname)):
+            print ("{0} already exists. Pass -f or --force to override".format(outname))
+            quit(1)
+        with open(outname, "w") as outfile:
+            if filetype is "json":
+                json.dump(vals, outfile, indent=4)
+            else:
+                outfile.write(vals)
         outfile.closed
-        print ("Wrote {0}".format(self.outname))
+        print outname
 
     @property
     def outname(self):
@@ -83,48 +105,36 @@ class Create(object):
         return json.loads(containerproc.stdout.read())[0]
 
     def metadata_file(self):
-        dockjson = self.container_json
-        newjson = dict
-        newconfig = []
-        newhost = dict
+        # FIXME: populate these values
+        userdict = {'UserParams': {'restart': '', 'rm': '' , 'dockercommand': '',
+                                 'sig-proxy':''
+                                }}
 
-        configkeys = {'Config': {'AttachStderr', 'AttachStdin', 'AttachStdout',
-                                 'Cmd', 'CpuShares', 'Cpuset', 'Env', 'Hostname',
-                                 'Image', 'Memory', 'Tty', 'User', 'WorkingDir'
-                                 },
-                      'HostConfig': {'Binds', 'CapAdd', 'CapDrop', 'ContainerIDFile', 'Dns',
-                                     'DnsSearch', 'Links', 'LxcConf', 'NetworkMode',
-                                     'PortBindings', 'Privileged', 'PublishAllPorts'
-                                     }
-                      }
+        # instead of re-building the json, we take the whole thing
+        # TODO: filter out the irrelevant keys
+        #configkeys = {'Config': {'AttachStderr', 'AttachStdin', 'AttachStdout',
+        #                         'Cmd', 'CpuShares', 'Cpuset', 'Env', 'Hostname',
+        #                         'Image', 'Memory', 'Tty', 'User', 'WorkingDir'
+        #                         },
+        #              'HostConfig': {'Binds', 'CapAdd', 'CapDrop', 'ContainerIDFile', 'Dns',
+        #                             'DnsSearch', 'Links', 'LxcConf', 'NetworkMode',
+        #                             'PortBindings', 'Privileged', 'PublishAllPorts'
+        #                             }
+        #              }
 
-        vals = self.assembledict(newconfig, configkeys, dockjson)
-        self.writeoutput(vals)
+        vals = [self.container_json, userdict]
+        self.writeoutput(vals, self.outname)
 
     def kubernetes_file(self):
-        _kube = self.outname.replace('.json', '-pod.json')
-        _schema = self.kube_schema
-        _schema.update({"id": "foobar"})
-        #print json.dumps(_schema, indent=2, sort_keys=False)
-        print "Wrote kube file %s" % _kube
-        #def assembledict(self, mydict, mykeys, dockjson):
-        #    userdict = {'UserParams': {'restart': '', 'rm': '' , 'dockercommand': '',
-        #                             'sig-proxy':''
-        #                            }}
-        #    for desc in mykeys:
-        #        newdict = {desc: {}}
-        #        for keys in mykeys[desc]:
-        #            newdict[desc][keys] = dockjson[desc][keys]
-        #        mydict.append(newdict)
-        #    if dockjson['Name'] != "":
-        #        namedict = {'Name': dockjson['Name'] }
-        #        mydict.append(namedict)
-        #    mydict.append(userdict)
-        #    return mydict
+        kube_file = self.outname.replace('.json', '-pod.json')
+        schema = self.kube_schema
+        # FIXME: need a better way to iterate over
+        schema.update({'labels': {'name': self.container_json['Name']}})
+        self.writeoutput(schema, kube_file)
 
     @property
     def kube_schema(self):
-        kube = {
+        return {
             "kind": "Pod",
             "id": None,
             "apiVersion": "v1beta1",
@@ -149,7 +159,38 @@ class Create(object):
                 "name": None
             }
         }
-        return kube
+
+    @property
+    def sysd_unit_template(self):
+        return """[Unit]
+Description=$name
+After=docker.service
+Requires=docker.service
+
+[Service]
+TimeoutStartSec=0
+ExecStartPre=-/usr/bin/docker kill $name
+ExecStartPre=-/usr/bin/docker rm $name
+ExecStartPre=/usr/bin/docker pull $name
+ExecStart=/usr/bin/docker run --name  $name $cmd
+
+[Install]
+WantedBy=multi-user.target
+"""
+
+    def sysd_unit_file(self):
+        cmd = ' '.join(self.container_json['Config']['Cmd'])
+        repl_dict = {'name': self.container_json['Name'],
+            'cmd': cmd}
+        template = Template(self.sysd_unit_template)
+        template = template.substitute(repl_dict)
+        unit_filename = self.outname.replace('.json', '.service')
+        self.writeoutput(template, unit_filename, "text")
+
+    def write_files(self):
+        self.metadata_file()
+        self.kubernetes_file()
+        self.sysd_unit_file()
 
 class List(object):
     def __init__(self, local):
@@ -212,10 +253,10 @@ class Pull(object):
 
     def writeoutput(self):
         if (not self.force) and (self.outfileexists):
-            print ("{0} already exists. You can pass -f to override".format(self.outname))
-            quit()
+            print ("{0} already exists. Pass -f or --force to override".format(self.outname))
+            quit(1)
         else:
             with open(self.outname, "w") as outfile:
                 outfile.write(self.response.read())
             outfile.closed
-            print ("Wrote {0}".format(self.outname))
+            print self.outname

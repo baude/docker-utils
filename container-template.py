@@ -1,4 +1,20 @@
 #!/usr/bin/env python
+# Copyright (C) 2014 Brent Baude <bbaude@redhat.com>, Aaron Weitekamp <aweiteka@redhat.com>
+#
+# This library is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2 of the License, or (at your option) any later version.
+#
+# This library is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with this library; if not, write to the
+# Free Software Foundation, Inc., 59 Temple Place - Suite 330,
+# Boston, MA 02111-1307, USA.
 
 import argparse
 
@@ -17,9 +33,6 @@ def main():
                        help='Container ID')
     create_parser.add_argument('-o', '--outfile',
                        help='Specify metadata output filename. Defaults to container ID.')
-    create_parser.add_argument('-k', '--kubernetes',
-                       action='store_true',
-                       help='Also create a kubernetes pod file')
     create_parser.add_argument('-f', '--force',
                        action='store_true',
                        help='Overwrite existing metadata file. Defaults to false.')
@@ -52,9 +65,7 @@ def main():
         import metadata
         # TODO: use kwargs
         create = metadata.Create(args.cuid, args.outfile, args.force)
-        create.metadata_file()
-        if args.kubernetes:
-            create.kubernetes_file()
+        create.write_files()
     elif args.action in "list":
         import metadata
         # TODO: use kwargs
