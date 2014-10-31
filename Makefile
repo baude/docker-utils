@@ -15,7 +15,7 @@ install:
 		chmod 755 $(BINDIR)/$$command; \
 	done
 	mkdir -p $(DESTDIR)/var/container-template/system
-	mkdir $(DESTDIR)/var/container-template/user
+	mkdir -p $(DESTDIR)/var/container-template/user
 
 uninstall: docker-dash.py
 	for files in $(objects); do \
