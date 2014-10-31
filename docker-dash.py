@@ -44,35 +44,24 @@ if args.all:
     print "View all containers"
     allcontains = True
 
-
-class Screen(object):
-    # main class
-    def __init__(self):
-        self.c = docker.Client(base_url='unix://var/run/docker.sock', version='1.12', timeout=10)
-
-    def stopcontainers(self, cid, cpid):
-        print "Stopping {0}".format(cid)
-        self.c.stop(cid, None)
-        lambda: os.waitpid(cpid, 0)
-
-    def startcontainers(self, cid):
-        self.c.start(cid)
-
-    def deletecontainer(self, cid):
-        try:
-            print "Deleting %s" % cid
-            self.c.remove_container(cid, v=False, link=False)
-        except:
-            print "Unable to find that container ..."
+class GetContainer:
 
     def getcontainer(self, cdetails):
         """returns valid list of container IDs"""
         print " "
         global myscreen
         stopcontainers = raw_input("Which {0}(s)?: ".format(myscreen))
+
+        if stopcontainers == "all":
+            self.status = True
+            return self.str2list(str("0-{0}".format(len(cdetails)-1)))
+
         stopcontainers = self.str2list(stopcontainers)
         if self.containerinrange(cdetails, stopcontainers) == False:
-            return False
+            self.status = False
+        else:
+            self.status = True
+        
         return stopcontainers
 
     def str2list(self, inlist):
@@ -105,6 +94,7 @@ class Screen(object):
                 time.sleep(2)
                 return False
         return True
+    
 
     def isInt(self, mystr):
         try:
@@ -112,6 +102,38 @@ class Screen(object):
             return True
         except ValueError:
             return False
+
+    def createconfromimage(self, irepo,c):
+        irun = c.create_container(image=irepo)
+        self.cid = irun['Id']
+        self.warnings = irun['Warnings']
+
+
+class Screen(object):
+    # main class
+    def __init__(self):
+        self.c = docker.Client(base_url='unix://var/run/docker.sock', version='1.12', timeout=10)
+
+    def stopcontainers(self, cid, cpid):
+        print "Stopping {0}".format(cid)
+        self.c.stop(cid, None)
+        lambda: os.waitpid(cpid, 0)
+
+    def startcontainers(self, cid):
+        self.c.start(cid)
+
+    def deletecontainer(self, cid):
+        try:
+            print "Deleting %s" % cid
+            self.c.remove_container(cid, v=False, link=False)
+        except:
+            print "Unable to find that container ..."
+
+    def cinfo(self, cid):
+        cinspect =  self.c.inspect_container(cid)
+        #foo = self.
+        self.pid = cinspect['State']['Pid']
+        self.isRunning = True if cinspect['State']['Running'] is True else False
 
 
 class Containers(Screen):
@@ -152,6 +174,18 @@ class Containers(Screen):
         else:
             return False
 
+    def runcontainer(self, cid, mycontainers):
+        self.cinfo(cid)
+        cdetails = self.getcontainerinfo(mycontainers)
+        if self.isRunning:
+            print "{0}{1} is already running {2}".format(color.BOLD, cid, color.END)
+            time.sleep(1)
+            return "", False
+        else:
+            print "Starting {0}".format(cid) 
+            t = threading.Thread(target=screen.startcontainers, args=(cid,))
+            return t, True
+
     def getcontainersummary(self, containerinfo):
         """
         This function takes a container and returns its run state
@@ -179,6 +213,7 @@ class Containers(Screen):
         print "GUI Reference: (q)uit (i)mages (re)fresh show (a)ll"
         print "Container Reference: (r)un (s)top (d)elete (p)eek"
         print " "
+        cons = GetContainer()
         containernum = raw_input("Command: ")
         if containernum.upper() == "A":
             if allcontains == True:
@@ -192,16 +227,19 @@ class Containers(Screen):
         if containernum.upper() == "Q":
             quit()
         if containernum.upper() == "S":
-            stopcontainer = screen.getcontainer(mycontainers)
+            stopcontainer = cons.getcontainer(mycontainers)
+            if not cons.status:
+                self.printsummary()
             stopthreads = []
             for container in stopcontainer:
+                print container
                 cid = self.returnuid(mycontainers, container)
-                if not self.isRunning(mycontainers, container):
+                self.cinfo(cid)
+                if not self.isRunning:
                     print "%s is not running" % cid
                     time.sleep(1)
-                    break
-                cpid = self.getpid(cid)
-                t = threading.Thread(target=screen.stopcontainers, args=(cid, cpid,))
+                    # break
+                t = threading.Thread(target=screen.stopcontainers, args=(cid, self.pid,))
 
                 stopthreads.append(t)
                 t.start()
@@ -211,30 +249,39 @@ class Containers(Screen):
 
         if containernum.upper() == "R":
             startthreads = []
-            runcontainer = screen.getcontainer(mycontainers)
+            runcontainer = cons.getcontainer(mycontainers)
+            if not cons.status:
+                self.printsummary()
             for container in runcontainer:
                 cid = self.returnuid(mycontainers, container)
-                cdetails = self.getcontainerinfo(mycontainers)
-                if self.isRunning(mycontainers, container):
-                    print "%s is already running" % cid
-                    time.sleep(1)
-                    break
-                t = threading.Thread(target=screen.startcontainers, args=(cid,))
-                startthreads.append(t)
-                t.start()
+                t, status = self.runcontainer(cid, mycontainers)
+                if status:
+                    startthreads.append(t)
+                    t.start()
             print "Waiting for containers to start"
             [x.join() for x in startthreads]
 
         if containernum.upper() == "D":
             cdetails = self.getcontainerinfo(mycontainers)
-            delcontainer = screen.getcontainer(cdetails)
+            delcontainer = cons.getcontainer(cdetails)
+            if not cons.status:
+                self.printsummary()
+            print delcontainer
             for container in delcontainer:
                 cid = self.returnuid(mycontainers, container)
-                screen.deletecontainer(cid)
+                self.cinfo(cid)
+                if not self.isRunning:
+                    screen.deletecontainer(cid)
+                else:
+                    print " "
+                    print "{0}{1} is already running. Please stop before deleting.{2}".format(color.BOLD, cid, color.END)
+                    print " "
 
         if containernum.upper() == "P":
-            cdetails = self.getcontainerinfo(mycontainers)
-            peekcontainer = screen.getcontainer(cdetails)
+            cdetails = cons.getcontainerinfo(mycontainers)
+            if not cons.status:
+                self.printsummary()
+            peekcontainer = cons.getcontainer(cdetails)
             if peekcontainer != False:
                 for container in peekcontainer:
                     if not self.isRunning(mycontainers, container):
@@ -248,12 +295,34 @@ class Containers(Screen):
                     self.terminal2(cpid)
         self.printsummary()
 
+class color:
+    PURPLE = '\033[95m'
+    CYAN = '\033[96m'
+    DARKCYAN = '\033[36m'
+    BLUE = '\033[94m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    END = '\033[0m'
+
+
+
 
 class Images(Screen):
     # image specific stuffs
 
     def getimage(self, containerinfo):
         return string.replace(containerinfo[0]['Config']['Image'], "/", "")
+
+    def imageexists(self, iid):
+        i = self.c.images(name=None, quiet=False, all=True, viz=False)
+        for f in i:
+            if f['Id'].startswith(iid):
+                return True
+        else:
+            return False
 
     def returnfulluid(self, iid):
         i = self.c.images(name=None, quiet=False, all=True, viz=False)
@@ -300,8 +369,9 @@ class Images(Screen):
             for i in iid:
                 self.deleteimage(i)
         else:
-            print "Deleting {0}".format(iid)
-            self.c.remove_image(iid)
+            if self.imageexists(iid):
+                print "Deleting {0}".format(iid)
+                self.c.remove_image(iid)
 
     def checkforcontainers(self, imagelist):
         delcontainers = []
@@ -329,6 +399,9 @@ class Images(Screen):
                     delcontainers.append(mydict)
         return delcontainers
 
+
+
+
     def printimagesummary(self):
         global myscreen
         global allcontains
@@ -351,6 +424,8 @@ class Images(Screen):
         print "GUI Reference: (c) containers (q)uit (re)fresh"
         print "Image Reference: (r)un (d)elete"
         print " "
+        cons = GetContainer()
+        containers = Containers() 
         containernum = raw_input("Command: ")
         if containernum.upper() == "A":
             if allcontains == True:
@@ -365,7 +440,7 @@ class Images(Screen):
             quit()
         if containernum.upper() == "D":
             global dellist
-            delimages = screen.getcontainer(images)
+            delimages = cons.getcontainer(images)
             allimages = screen.c.images(name=None, quiet=False, all=True, viz=False)
             for d in delimages:
                 imagelist = []
@@ -373,7 +448,7 @@ class Images(Screen):
                 dellist.append(iid)
                 imagelist = self.crawl(iid, allimages)
                 delcontainers = self.checkforcontainers(imagelist)
-                if delcontainers > 0:
+                if len(delcontainers) > 0:
                     print "The following containers would also be stopped and deleted."
                     print " "
                     for cons in delcontainers:
@@ -393,6 +468,17 @@ class Images(Screen):
                 for i in reversed(imagelist):
                     self.deleteimage(i)
                 del imagelist[:]
+
+        if containernum.upper() == "R":
+            runimages = cons.getcontainer(images)
+            for i in runimages:
+                irepo = images[int(i)]['RepoTags'][0].split(':')[0]
+                cons.createconfromimage(irepo, self.c)
+                print "Created new container: {0}".format(cons.cid)
+                print "Warnings for creating {0}: {1}".format(cons.cid[:8], cons.warnings)
+                #Containers.startcontainers(cons.cid)
+                containers.startcontainers(cons.cid)
+            time.sleep(2)
         self.printimagesummary()
 
 
