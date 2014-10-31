@@ -210,8 +210,9 @@ class Containers(Screen):
         else:
             print "No active containers ..."
         print " "
-        print "GUI Reference: (q)uit (i)mages (re)fresh show (a)ll"
-        print "Container Reference: (r)un (s)top (d)elete (p)eek"
+        print "Container Reference: (r)un (s)top (d)elete (p)eek (l)ogs"
+        print "GUI Reference: (q)uit (re)fresh show (a)ll"
+        print "Screens: (i)mages"
         print " "
         cons = GetContainer()
         containernum = raw_input("Command: ")
@@ -293,6 +294,16 @@ class Containers(Screen):
                     cpid = self.getpid(cid)
                     print "Entering container %s" % self.returnuid(cdetails, container)
                     self.terminal2(cpid)
+        if containernum.upper() == "L":
+            logcons = cons.getcontainer(mycontainers)
+            for container in logcons:
+                cid = self.returnuid(mycontainers, container)
+                print "{0}{1}-----------------------------------------".format(color.RED, color.BOLD)
+                print "     Log for {0}".format(cid)
+                print "-----------------------------------------{0}".format(color.END)
+                print screen.c.logs(cid)
+                print "{0}{1}-----------------------------------------{2}".format(color.RED, color.BOLD, color.END)
+                print " "
         self.printsummary()
 
 class color:
