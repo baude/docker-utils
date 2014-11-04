@@ -57,7 +57,7 @@ class GetContainer:
             return self.str2list(str("0-{0}".format(len(cdetails)-1)))
 
         stopcontainers = self.str2list(stopcontainers)
-        if self.containerinrange(cdetails, stopcontainers) == False:
+        if self.containerinrange(cdetails, stopcontainers) is False:
             self.status = False
         else:
             self.status = True
@@ -85,7 +85,7 @@ class GetContainer:
             foo = foo - 1
             if not(self.isInt(i)):
                 print " "
-                print ("{0} isn't a integer...".format(i))
+                print ("{0} isn't an integer...".format(i))
                 time.sleep(2)
                 return False
             if (0 <= int(i) <= foo) == False:
@@ -296,14 +296,15 @@ class Containers(Screen):
                     self.terminal2(cpid)
         if containernum.upper() == "L":
             logcons = cons.getcontainer(mycontainers)
-            for container in logcons:
-                cid = self.returnuid(mycontainers, container)
-                print "{0}{1}-----------------------------------------".format(color.RED, color.BOLD)
-                print "     Log for {0}".format(cid)
-                print "-----------------------------------------{0}".format(color.END)
-                print screen.c.logs(cid)
-                print "{0}{1}-----------------------------------------{2}".format(color.RED, color.BOLD, color.END)
-                print " "
+            if cons.status is not False:
+                for container in logcons:
+                    cid = self.returnuid(mycontainers, container)
+                    print "{0}{1}-----------------------------------------".format(color.RED, color.BOLD)
+                    print "     Log for {0}".format(cid)
+                    print "-----------------------------------------{0}".format(color.END)
+                    print screen.c.logs(cid)
+                    print "{0}{1}-----------------------------------------{2}".format(color.RED, color.BOLD, color.END)
+                    print " "
         self.printsummary()
 
 class color:
@@ -483,11 +484,13 @@ class Images(Screen):
         if containernum.upper() == "R":
             runimages = cons.getcontainer(images)
             for i in runimages:
-                irepo = images[int(i)]['RepoTags'][0].split(':')[0]
+                #irepo = images[int(i)]['RepoTags'][0].split(':')[0]
+                irepo = images[int(i)]['RepoTags'][0]
+                print images[int(i)]
+                print "irepo = {0} self.c = {1}".format(irepo, self.c)
                 cons.createconfromimage(irepo, self.c)
                 print "Created new container: {0}".format(cons.cid)
                 print "Warnings for creating {0}: {1}".format(cons.cid[:8], cons.warnings)
-                #Containers.startcontainers(cons.cid)
                 containers.startcontainers(cons.cid)
             time.sleep(2)
         self.printimagesummary()
