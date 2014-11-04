@@ -24,6 +24,7 @@ import threading
 import string
 import docker
 import pty
+import metadata
 
 dellist = []
 
@@ -56,7 +57,7 @@ class GetContainer:
 
         if stopcontainers == "all":
             self.status = True
-            return self.str2list(str("0-{0}".format(len(cdetails)-1)))
+            return self.str2list(str("0-{0}".format(len(cdetails) -1)))
 
         stopcontainers = self.str2list(stopcontainers)
         if self.containerinrange(cdetails, stopcontainers) is False:
@@ -212,7 +213,7 @@ class Containers(Screen):
         else:
             print "No active containers ..."
         print " "
-        print "Container Reference: (r)un (s)top (d)elete (p)eek (l)ogs"
+        print "Container Reference: (r)un (s)top s(n)apshot (d)elete (p)eek (l)ogs"
         print "GUI Reference: (q)uit (re)fresh show (a)ll"
         print "Screens: (i)mages"
         print " "
@@ -307,6 +308,19 @@ class Containers(Screen):
                     print screen.c.logs(cid)
                     print "{0}{1}-----------------------------------------{2}".format(color.RED, color.BOLD, color.END)
                     print " "
+
+        if containernum.upper() == "N":
+            snapcons =  cons.getcontainer(mycontainers)
+            for snaps in snapcons:
+                cid = self.returnuid(mycontainers, snaps)
+                kwargs = {'cuid': self.returnuid(mycontainers, snaps), 
+                          'outfile': None,
+                          'directory': None,
+                          'force': True }
+
+                create = metadata.Create(**kwargs)
+                create.write_files()
+
         self.printsummary()
 
 class color:

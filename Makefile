@@ -16,6 +16,8 @@ install:
 	done
 	mkdir -p $(DESTDIR)/var/container-template/system
 	mkdir -p $(DESTDIR)/var/container-template/user
+	chgrp -R docker $(DESTDIR)/var/container-template
+	chmod -R 775 $(DESTDIR)/var/container-template
 
 uninstall: docker-dash.py
 	for files in $(objects); do \

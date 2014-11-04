@@ -187,7 +187,8 @@ WantedBy=multi-user.target
 """
 
     def sysd_unit_file(self):
-        cmd = ' '.join(self.container_json['Config']['Cmd'])
+        confcmd = "" if self.container_json['Config']['Cmd'] == None else self.container_json['Config']['Cmd']
+        cmd = ' '.join(confcmd)
         repl_dict = {'name': self.container_json['Name'],
             'cmd': cmd}
         template = Template(self.sysd_unit_template)
