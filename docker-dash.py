@@ -30,10 +30,12 @@ dellist = []
 parser = argparse.ArgumentParser()
 parser.add_argument("-a", "--all", help="Work with non-active containers too", action="store_true")
 parser.add_argument("-i", "--images", help="Jump into the images interface", action="store_true")
+parser.add_argument("-d","--delete", help="Delete all images without going into docker-dash", action="store_true")
 
 args = parser.parse_args()
 
 allcontains = False
+
 if args.images:
     myscreen = "images"
 else:
@@ -496,13 +498,52 @@ class Images(Screen):
         self.printimagesummary()
 
 
+class CommandLine(object):
+
+    def deleteall(self):
+        global dellist
+        getcons = GetContainer() 
+        cons = screen.c.containers(all=True)
+        if len(cons) > 0:
+            print "Making sure all containers are stopped."
+            for i in range(len(cons)):
+                if containers.isRunning(cons, i):
+                    cid = containers.returnuid(cons, i)
+                    cpid = containers.getpid(cid)
+                    containers.stopcontainers(cid, cpid)
+        print "Deleting containers..."
+        for d in cons:
+            screen.deletecontainer(d['Id'])
+        print "Deleting images..."
+        allimages = screen.c.images(name=None, quiet=False, all=True, viz=False)
+        #mylist = getcons.str2list(str("0-{0}".format(len(allimages))))
+        #for d  in getcons.str2list(str("0-{0}".format(len(allimages)))):
+        #   print d
+        for d in allimages:
+            imagelist = []
+            iid = d['Id']
+            dellist.append(iid)
+            imagelist = images.crawl(iid, allimages)
+
+        for i in reversed(imagelist):
+            images.deleteimage(i)
+        del imagelist[:]
+
 if __name__ == '__main__':
 
     screen = Screen()
-
     containers = Containers()
     images = Images()
-    if myscreen == "containers":
-        containers.printsummary()
-    elif myscreen == "images":
-        images.printimagesummary()
+    commands = CommandLine()
+    if args.delete is True:
+        print " "
+        print "Delete all images and containers?"
+        confirm = raw_input("Yes/No: ")
+        if confirm == "Yes":
+            commands.deleteall()
+
+    else:
+        if myscreen == "containers":
+            containers.printsummary()
+        elif myscreen == "images":
+            images.printimagesummary()
