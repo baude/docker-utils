@@ -437,7 +437,7 @@ class Images(Screen):
         images = self.c.images(name=None, quiet=False, all=allcontains, viz=False)
         # Map is: Created, VirtualSize, RepoTags[], Id
         print " "
-        if len(images) > 1:
+        if len(images) > 0:
             print ('{0:2} {1:20} {2:10} {3:18} {4:8}'.format(" #", "Repo", "Image ID ", "Created", "Size"))
             for s in range(len(images)):
                 imagedesc = images[s]['RepoTags'][0].split(':')[0]
