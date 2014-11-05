@@ -551,9 +551,9 @@ if __name__ == '__main__':
     commands = CommandLine()
     if args.delete is True:
         print " "
-        print "Delete all images and containers?"
-        confirm = raw_input("Yes/No: ")
-        if confirm == "Yes":
+        yes = set(['yes','y', 'ye'])
+        choice = raw_input('Delete all images and containers? Yes / No: ').lower()
+        if choice in yes:
             commands.deleteall()
 
     else:
