@@ -9,7 +9,7 @@ Source0: %{name}-%{version}.tar.xz
 License: LGPLv2+
 URL: https://github.com/baude/docker-utils
 
-Requires: python-docker
+Requires: python-docker-py
 
 %description
 Various utilities to interact with docker containers
