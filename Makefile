@@ -10,7 +10,6 @@ DESTDIR="/"
 install:
 	python setup.py build
 	python setup.py install --root=$(DESTDIR)
-	#python setup.py install_lib --root=${DESTDIR}
 	mkdir -p $(DESTDIR)/var/container-template/system
 	mkdir -p $(DESTDIR)/var/container-template/user
 	chgrp -R docker $(DESTDIR)/var/container-template
