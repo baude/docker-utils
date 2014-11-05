@@ -1,10 +1,6 @@
 SHELL = /bin/sh
 
 
-ifdef DESTDIR
-	DESTDIR := "fofofo"
-endif
-
 DESTDIR="/"
 
 install:

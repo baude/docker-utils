@@ -24,7 +24,7 @@ import threading
 import string
 import docker
 import pty
-import docker
+from docker_utils import metadata
 
 dellist = []
 

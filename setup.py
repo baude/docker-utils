@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-setup(name='docker-utils',
+setup(name='docker_utils',
       version='0.1a',
       description='Utilities for working with docker',
       author='Brent Baude',
@@ -8,5 +8,5 @@ setup(name='docker-utils',
       url='https://github.com/baude/docker-utils/',
       license='LGPLv2+',
       packages=find_packages(),
-      scripts=['docker-utils/docker-dash', 'docker-utils/container-template']
+      scripts=['docker_utils/docker-dash', 'docker_utils/container-template']
 )

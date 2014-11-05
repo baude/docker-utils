@@ -17,6 +17,7 @@
 # Boston, MA 02111-1307, USA.
 
 import argparse
+from docker_utils import metadata, docker-wrapper
 
 def main():
     """Entrypoint for script"""
@@ -54,13 +55,11 @@ def main():
     args = parser.parse_args()
 
     if args.action in "run":
-        import docker_wrapper
         kwargs = {'command': args.action, 'jsonfile': args.json}
         run = docker_wrapper.Run(**kwargs)
         run.start_container()
 
     elif args.action in "create":
-        import metadata
         kwargs = {'cuid': args.cuid,
                   'outfile': args.outfile,
                   'directory': args.directory,
@@ -68,11 +67,9 @@ def main():
         create = metadata.Create(**kwargs)
         create.write_files()
     elif args.action in "list":
-        import metadata
         filelist = metadata.List()
         filelist.metadata_files()
     elif args.action in "pull":
-        import metadata
         kwargs = {'outfile': args.outfile,
                   'directory': args.directory,
                   'force': args.force}
