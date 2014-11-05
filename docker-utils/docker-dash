@@ -525,14 +525,12 @@ class CommandLine(object):
                     cid = containers.returnuid(cons, i)
                     cpid = containers.getpid(cid)
                     containers.stopcontainers(cid, cpid)
-        print "Deleting containers..."
-        for d in cons:
-            screen.deletecontainer(d['Id'])
+            print "Deleting containers..."
+            for d in cons:
+                screen.deletecontainer(d['Id'])
+
         print "Deleting images..."
         allimages = screen.c.images(name=None, quiet=False, all=True, viz=False)
-        #mylist = getcons.str2list(str("0-{0}".format(len(allimages))))
-        #for d  in getcons.str2list(str("0-{0}".format(len(allimages)))):
-        #   print d
         for d in allimages:
             imagelist = []
             iid = d['Id']
@@ -555,7 +553,9 @@ if __name__ == '__main__':
         choice = raw_input('Delete all images and containers? Yes / No: ').lower()
         if choice in yes:
             commands.deleteall()
-
+        else:
+            print "Exiting Now."
+            sys.exit()
     else:
         if myscreen == "containers":
             containers.printsummary()
