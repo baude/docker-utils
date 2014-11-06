@@ -53,9 +53,11 @@ class GetContainer:
         """returns valid list of container IDs"""
         print " "
         global myscreen
-        stopcontainers = raw_input("Which {0}(s)?: ".format(myscreen))
-
-        if stopcontainers == "all":
+        stopcontainers = raw_input("enter single number, range or list\nWhich {0}(s)? (a)bort (all): ".format(myscreen))
+        if stopcontainers.upper() == "A":
+            self.status = False
+            return
+        elif stopcontainers == "all":
             self.status = True
             return self.str2list(str("0-{0}".format(len(cdetails) -1)))
 
@@ -206,19 +208,19 @@ class Containers(Screen):
         global allcontains
         mycontainers = screen.c.containers(quiet=False, all=allcontains, trunc=True, latest=False, since=None, before=None, limit=-1)
         if len(mycontainers) != 0:
-            print ('{0:2} {1:12} {2:25} {3:8}'.format(" #", "ID", "Image", "Status"))
+            print ('\n{0:2} {1:12} {2:25} {3:8}'.format(" #", "ID", "Image", "Status"))
+            print ('{0:2} {1:12} {2:25} {3:8}'.format(" -", "--", "-----", "------"))
             for s in range(len(mycontainers)):
                 chostname, cimage, crun = self.getcontainersummary(mycontainers[s])
                 print ('{0:2} {1:12} {2:25} {3:8}'.format(s, chostname, cimage, crun))
         else:
             print "No active containers ..."
         print " "
-        print "Container Reference: (r)un (s)top s(n)apshot (d)elete (p)eek (l)ogs"
-        print "GUI Reference: (q)uit (re)fresh show (a)ll"
-        print "Screens: (i)mages"
+        print "Display: <container context> (i)mage-context | show-(a)ll (re)fresh"
+        print "Command: (r)un (s)top s(n)apshot (d)elete (e)nter (l)ogs (q)uit"
         print " "
         cons = GetContainer()
-        containernum = raw_input("Command: ")
+        containernum = raw_input("Action: ")
         if containernum.upper() == "A":
             if allcontains == True:
                 allcontains = False
@@ -236,7 +238,6 @@ class Containers(Screen):
                 self.printsummary()
             stopthreads = []
             for container in stopcontainer:
-                print container
                 cid = self.returnuid(mycontainers, container)
                 self.cinfo(cid)
                 if not self.isRunning:
@@ -270,7 +271,6 @@ class Containers(Screen):
             delcontainer = cons.getcontainer(cdetails)
             if not cons.status:
                 self.printsummary()
-            print delcontainer
             for container in delcontainer:
                 cid = self.returnuid(mycontainers, container)
                 self.cinfo(cid)
@@ -281,13 +281,13 @@ class Containers(Screen):
                     print "{0}{1} is already running. Please stop before deleting.{2}".format(color.BOLD, cid, color.END)
                     print " "
 
-        if containernum.upper() == "P":
+        if containernum.upper() == "E":
             cdetails = cons.getcontainerinfo(mycontainers)
             if not cons.status:
                 self.printsummary()
-            peekcontainer = cons.getcontainer(cdetails)
-            if peekcontainer != False:
-                for container in peekcontainer:
+            entercontainer = cons.getcontainer(cdetails)
+            if entercontainer != False:
+                for container in entercontainer:
                     if not self.isRunning(mycontainers, container):
                         print " "
                         print ("{0} is not a running container".format(self.returnuid(cdetails, container)))
@@ -438,7 +438,8 @@ class Images(Screen):
         # Map is: Created, VirtualSize, RepoTags[], Id
         print " "
         if len(images) > 0:
-            print ('{0:2} {1:20} {2:10} {3:18} {4:8}'.format(" #", "Repo", "Image ID ", "Created", "Size"))
+            print ('\n{0:2} {1:20} {2:10} {3:18} {4:8}'.format(" #", "Repo", "Image ID ", "Created", "Size"))
+            print ('{0:2} {1:20} {2:10} {3:18} {4:8}'.format(" -", "----", "-------- ", "-------", "----"))
             for s in range(len(images)):
                 imagedesc = images[s]['RepoTags'][0].split(':')[0]
                 if len(images[s]['RepoTags']) > 1:
@@ -449,12 +450,12 @@ class Images(Screen):
         else:
             print "No images ..."
         print " "
-        print "GUI Reference: (c) containers (q)uit (re)fresh"
-        print "Image Reference: (r)un (d)elete"
+        print "Display: (c)ontainer-context <image context> | (re)fresh"
+        print "Command: (r)un (d)elete (q)uit"
         print " "
         cons = GetContainer()
         containers = Containers() 
-        containernum = raw_input("Command: ")
+        containernum = raw_input("Action: ")
         if containernum.upper() == "A":
             if allcontains == True:
                 allcontains = False
