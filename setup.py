@@ -8,5 +8,5 @@ setup(name='docker_utils',
       url='https://github.com/baude/docker-utils/',
       license='LGPLv2+',
       packages=find_packages(),
-      scripts=['docker_utils/docker-dash', 'docker_utils/container-template']
+      scripts=['docker-dash', 'container-template']
 )
