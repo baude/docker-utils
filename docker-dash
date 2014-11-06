@@ -204,15 +204,28 @@ class Containers(Screen):
             crun = "Not Running"
         return cuid[:8], cimage, crun
 
+
+    def getuserjsons(self):
+        jsons = []
+        for file in os.listdir("/var/container-template/user"):
+            if not file.endswith("pod.json") and file.endswith(".json"):
+                jsons.append(file)
+        return jsons
+
     def printsummary(self):
         global allcontains
         mycontainers = screen.c.containers(quiet=False, all=allcontains, trunc=True, latest=False, since=None, before=None, limit=-1)
+
+        userjsons = self.getuserjsons()
         if len(mycontainers) != 0:
             print ('\n{0:2} {1:12} {2:25} {3:8}'.format(" #", "ID", "Image", "Status"))
             print ('{0:2} {1:12} {2:25} {3:8}'.format(" -", "--", "-----", "------"))
             for s in range(len(mycontainers)):
+                userjson = ""
                 chostname, cimage, crun = self.getcontainersummary(mycontainers[s])
-                print ('{0:2} {1:12} {2:25} {3:8}'.format(s, chostname, cimage, crun))
+                if any(chostname in uj for uj in userjsons):
+                    userjson = "*"
+                print ('{0:2} {1:12} {2:25} {3:8} {4:2}'.format(s, chostname, cimage, crun, userjson))
         else:
             print "No active containers ..."
         print " "
