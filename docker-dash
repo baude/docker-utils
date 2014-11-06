@@ -282,10 +282,10 @@ class Containers(Screen):
                     print " "
 
         if containernum.upper() == "E":
-            cdetails = cons.getcontainerinfo(mycontainers)
+            cdetails = self.getcontainerinfo(mycontainers)
+            entercontainer = cons.getcontainer(cdetails)
             if not cons.status:
                 self.printsummary()
-            entercontainer = cons.getcontainer(cdetails)
             if entercontainer != False:
                 for container in entercontainer:
                     if not self.isRunning(mycontainers, container):
