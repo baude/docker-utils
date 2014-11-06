@@ -17,7 +17,7 @@
 # Boston, MA 02111-1307, USA.
 
 import argparse
-from docker_utils import metadata, docker-wrapper
+from docker_utils import metadata, docker_wrapper
 
 def main():
     """Entrypoint for script"""
