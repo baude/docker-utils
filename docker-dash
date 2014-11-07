@@ -212,7 +212,7 @@ class Containers(Screen):
 
     def getuserjsons(self):
         jsons = []
-        for file in os.listdir("/var/container-template/user"):
+        for file in os.listdir(metadata.USER_TEMPLATE_DIR):
             if not file.endswith("pod.json") and file.endswith(".json"):
                 jsons.append(file)
         return jsons
@@ -222,12 +222,16 @@ class Containers(Screen):
         cons = GetContainer()
         mycontainers = screen.c.containers(quiet=False, all=allcontains, trunc=True, latest=False, since=None, before=None, limit=-1)
         cons.pheader("Containers")
+        userjsons = self.getuserjsons()
         if len(mycontainers) != 0:
-            print ('\n{0:2} {1:12} {2:25} {3:8} {4:20}'.format(" #", "ID", "Image", "Status", "Associated JSON file"))
-            print ('{0:2} {1:12} {2:25} {3:8} {4:20}'.format(" -", "--", "-----", "------", "--------------------"))
+            print ('\n{0:2} {1:12} {2:25} {3:8} {4:20}'.format(" #", "ID", "Image", "Status", "From JSON"))
+            print ('{0:2} {1:12} {2:25} {3:8} {4:20}'.format(" -", "--", "-----", "------", "-----------"))
             for s in range(len(mycontainers)):
+                userjson = ""
                 chostname, cimage, crun = self.getcontainersummary(mycontainers[s])
-                print ('{0:2} {1:12} {2:25} {3:8}'.format(s, chostname, cimage, crun))
+                if any(chostname in uj for uj in userjsons):
+                    userjson = "*"
+                print ('{0:2} {1:12} {2:25} {3:8} {4:20}'.format(s, chostname, cimage, crun, userjson))
         else:
             print "No active containers ..."
         print " "
@@ -463,7 +467,7 @@ class Images(Screen):
         else:
             print "No images to display."
         print "\nDisplay: (c)ontainer-context <image context> | (re)fresh (a)ll"
-        print "Command: (r)un (d)elete (q)uit (a)dd from json\n"
+        print "Command: (r)un (d)elete (q)uit (n)new from json\n"
         cons = GetContainer()
         containers = Containers()
         containernum = raw_input("Action: ")

@@ -22,6 +22,8 @@ import json
 import os
 import subprocess
 import docker
+import time
+from docker_utils import metadata
 
 
 class Run(object):
@@ -179,6 +181,11 @@ class Run(object):
                        djs.entrypoint, djs.cpu_shares, djs.working_dir, djs.domainname, djs.memswap_limit)
         print "Created new container {0}".format(newcontainer['Id'])
         dcons.c.start(newcontainer['Id'], None, djs.port_bindings, djs.lxc_conf, djs.publish_all_ports, djs.links, djs.priviledged, djs.dns, djs.dns_search, djs.volumes_from, djs.network_mode)
+        kwargs = {'cuid': newcontainer['Id'][:8], 'outfile': None, 'directory': None, 'force': True}
+        create = metadata.Create(**kwargs)
+        create.write_files()
+
+
 
 
 class DockerJSON(object):
