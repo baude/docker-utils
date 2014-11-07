@@ -26,7 +26,7 @@ import docker
 
 class Run(object):
     def __init__(self, **kwargs):
-        self.dockercommand = kwargs['command']
+        #self.dockercommand = kwargs['command']
         self.jsonfile = kwargs['jsonfile']
         # FIXME
         self.remove = True
@@ -39,7 +39,6 @@ class Run(object):
 
         try:
             # jsonschema.validate(json.loads(json_data), json.loads(json_schema))
-            print self.jsonfile
             json_data = open(self.jsonfile)
             return json.load(json_data)
 
@@ -178,7 +177,7 @@ class Run(object):
                        None, None, None, djs.mem_limit, djs.ports, djs.environment, djs.dns,
                        djs.volumes, djs.volumes_from, djs.network_disabled, djs.name,
                        djs.entrypoint, djs.cpu_shares, djs.working_dir, djs.domainname, djs.memswap_limit)
-        print newcontainer['Id']
+        print "Created new container {0}".format(newcontainer['Id'])
         dcons.c.start(newcontainer['Id'], None, djs.port_bindings, djs.lxc_conf, djs.publish_all_ports, djs.links, djs.priviledged, djs.dns, djs.dns_search, djs.volumes_from, djs.network_mode)
 
 

@@ -24,7 +24,7 @@ import threading
 import string
 import docker
 import pty
-from docker_utils import metadata
+from docker_utils import metadata, docker_wrapper
 
 dellist = []
 
@@ -69,6 +69,15 @@ class GetContainer:
             self.status = True
 
         return stopcontainers
+
+    def pheader(self, context):
+        wid = 50
+        msg = context.center(wid)
+        # print ''.center(wid, '-')
+        print ''
+        print color.WBGB + msg + color.END
+        print ''
+        # print ''.center(wid, '-')
 
     def str2list(self, inlist):
         """Converts input string into valid list
@@ -213,25 +222,21 @@ class Containers(Screen):
 
     def printsummary(self):
         global allcontains
+        cons = GetContainer()
         mycontainers = screen.c.containers(quiet=False, all=allcontains, trunc=True, latest=False, since=None, before=None, limit=-1)
-
-        userjsons = self.getuserjsons()
+        cons.pheader("Containers")
         if len(mycontainers) != 0:
             print ('\n{0:2} {1:12} {2:25} {3:8}'.format(" #", "ID", "Image", "Status"))
             print ('{0:2} {1:12} {2:25} {3:8}'.format(" -", "--", "-----", "------"))
             for s in range(len(mycontainers)):
-                userjson = ""
                 chostname, cimage, crun = self.getcontainersummary(mycontainers[s])
-                if any(chostname in uj for uj in userjsons):
-                    userjson = "*"
-                print ('{0:2} {1:12} {2:25} {3:8} {4:2}'.format(s, chostname, cimage, crun, userjson))
+                print ('{0:2} {1:12} {2:25} {3:8}'.format(s, chostname, cimage, crun))
         else:
             print "No active containers ..."
         print " "
         print "Display: <container context> (i)mage-context | show-(a)ll (re)fresh"
         print "Command: (r)un (s)top s(n)apshot (d)elete (e)nter (l)ogs (q)uit"
         print " "
-        cons = GetContainer()
         containernum = raw_input("Action: ")
         if containernum.upper() == "A":
             if allcontains == True:
@@ -347,6 +352,7 @@ class color:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
     END = '\033[0m'
+    WBGB = "\033[5;47;30m"
 
 
 class Images(Screen):
@@ -441,8 +447,10 @@ class Images(Screen):
     def printimagesummary(self):
         global myscreen
         global allcontains
+        cons = GetContainer()
         myscreen = "images"
         images = self.c.images(name=None, quiet=False, all=allcontains, viz=False)
+        cons.pheader("Images")
         # Map is: Created, VirtualSize, RepoTags[], Id
         print " "
         if len(images) > 0:
@@ -458,10 +466,9 @@ class Images(Screen):
         else:
             print "No images ..."
         print " "
-        print "Display: (c)ontainer-context <image context> | (re)fresh"
-        print "Command: (r)un (d)elete (q)uit (a)dd from json"
+        print "Display: (c)ontainer-context <image context> | (re)fresh (a)ll"
+        print "Command: (r)un (d)elete (q)uit (n)ew from json"
         print " "
-        cons = GetContainer()
         containers = Containers()
         containernum = raw_input("Action: ")
         if containernum.upper() == "A":
@@ -519,8 +526,46 @@ class Images(Screen):
                 containers.startcontainers(cons.cid)
             time.sleep(2)
 
-        if containernum.upper() == "A":
+        if containernum.upper() == "N":
+            # create = metadata.Create(**kwargs)
+            listtemps = metadata.List()
+            systemps = listtemps.metadata_files([metadata.SYSTEM_TEMPLATE_DIR])
+            if len(systemps) < 1:
+                print "There are no system templates available"
+                self.printimagesummary()
+
+            self.printsystemtemplates(systemps)
+            tempchoice = raw_input("Which template: ")
+            inputbool, checkmsg = self.checktempchoice(tempchoice, len(systemps))
+            if not inputbool:
+                print " "
+                print checkmsg
+                print " "
+                time.sleep(1)
+                self.printimagesummary()
+            kwargs = {'jsonfile': systemps[int(tempchoice)]}
+            run = docker_wrapper.Run(**kwargs)
+            run.start_container()
         self.printimagesummary()
+
+    def printsystemtemplates(self, systemps):
+        print " "
+        print "System templates that are available:"
+        print " "
+        print "{0:2} {1:30}".format(" #", "Template")
+        print "{0:2} {1:30}".format("--", "------------------------------")
+
+        for n in range(len(systemps)):
+            print "{0:2} {1:30}".format(n, systemps[n])
+        print " "
+
+    def checktempchoice(self, tempchoice, length):
+        cons = GetContainer()
+        if not cons.isInt(tempchoice):
+            return False, "Choice is not an integer"
+        if int(tempchoice) not in range(0, int(length)):
+            return False, "Choice is not in range"
+        return True, ""
 
 
 class CommandLine(object):
