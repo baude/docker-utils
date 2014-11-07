@@ -83,7 +83,7 @@ class Create(object):
             quit(1)
         with open(outname, "w") as outfile:
             if filetype is "json":
-                json.dump(vals, outfile, indent=4)
+                json.dump(vals, outfile, indent=2)
             else:
                 outfile.write(vals)
         outfile.closed
@@ -117,53 +117,54 @@ class Create(object):
                                    'sig-proxy': ''
                                    }}
 
-        # instead of re-building the json, we take the whole thing
-        # TODO: filter out the irrelevant keys
-        # configkeys = {'Config': {'AttachStderr', 'AttachStdin', 'AttachStdout',
-        #                         'Cmd', 'CpuShares', 'Cpuset', 'Env', 'Hostname',
-        #                         'Image', 'Memory', 'Tty', 'User', 'WorkingDir'
-        #                         },
-        #              'HostConfig': {'Binds', 'CapAdd', 'CapDrop', 'ContainerIDFile', 'Dns',
-        #                             'DnsSearch', 'Links', 'LxcConf', 'NetworkMode',
-        #                             'PortBindings', 'Privileged', 'PublishAllPorts'
-        #                             }
-        #              }
-
         vals = [self.container_json, userdict]
         self.writeoutput(vals, self.outname)
 
     def kubernetes_file(self):
         kube_file = self.outname.replace('.json', '-pod.json')
-        schema = self.kube_schema
+        pod = self.kube_pod
         # FIXME: need a better way to iterate over
-        schema.update({'labels': {'name': self.container_json['Name']}})
-        self.writeoutput(schema, kube_file)
+        # FIXME: containers, env, ports etc is a list
+        #pod.update({'desiredState': {'manifest': {'containers': {'command': self.container_json['Config']['Cmd']}}}})
+        #pod.update({'desiredState': {'manifest': {'containers': {'image': self.container_json['Config']['Image']}}}})
+        self.writeoutput(pod, kube_file)
 
     @property
-    def kube_schema(self):
+    def kube_pod(self):
         return {
             "kind": "Pod",
-            "id": None,
+            "id": self.container_json['Name'],
+            "labels": { "name": self.container_json['Name']},
             "apiVersion": "v1beta1",
             "namespace": None,
             "creationTimestamp": None,
             "selfLink": None,
             "desiredState": {
-                "manifest": {
-                    "version": "v1beta1",
-                    "id": None,
-                    "containers": [{
-                        "name": None,
-                        "image": None,
-                        "ports": [{
-                            "containerPort": 6379,
-                            "hostPort": 6379
-                        }]
-                    }]
-                }
-            },
-            "labels": {
-                "name": None
+              "manifest": {
+                "version": "v1beta1",
+                "id": None,
+                "containers": [{
+                  "name": self.container_json['Name'],
+                  "image": self.container_json['Config']['Image'],
+                  "command": self.container_json['Config']['Cmd'],
+                  "env": [{
+                    "name": None,
+                    "value": None }],
+                  "ports": [{
+                    "containerPort": None,
+                    "hostPort": None
+                  }],
+                  "volumeMounts": [{
+                    "name": "mount",
+                    "readOnly": None,
+                    "mountPath": None
+                  }]
+                }],
+                "volumes": [{
+                  "name": None,
+                  "source": { "hostDir": {"path": None}}
+                }]
+              }
             }
         }
 
