@@ -52,23 +52,25 @@ class GetContainer:
 
     def getcontainer(self, cdetails):
         """returns valid list of container IDs"""
-        print " "
         global myscreen
-        stopcontainers = raw_input("enter single number, range or list\nWhich {0}(s)? (a)bort (all): ".format(myscreen))
-        if stopcontainers.upper() == "A":
-            self.status = False
-            return
-        elif stopcontainers == "all":
-            self.status = True
-            return self.str2list(str("0-{0}".format(len(cdetails) - 1)))
-
-        stopcontainers = self.str2list(stopcontainers)
-        if self.containerinrange(cdetails, stopcontainers) is False:
-            self.status = False
-        else:
-            self.status = True
-
-        return stopcontainers
+        while True:
+            selection = raw_input("\nenter single number, range or list\nWhich {0}(s)? (a)bort (all): ".format(myscreen))
+            if selection.upper() == "A":
+                self.status = False
+                break
+                return
+            elif selection == "all":
+                self.status = True
+                break
+                return self.str2list(str("0-{0}".format(len(cdetails) - 1)))
+            else:
+                selection = self.str2list(selection)
+                if self.containerinrange(cdetails, selection) is False:
+                   continue
+                else:
+                    self.status = True
+                    break
+        return selection
 
     def pheader(self, context):
         wid = 50
@@ -94,19 +96,15 @@ class GetContainer:
             containerlist.extend(range(int(start), int(end) + 1))
         return containerlist
 
-    def containerinrange(self, cdetails, stopcontainers):
-        for i in stopcontainers:
-            foo = int(len(cdetails))
-            foo = foo - 1
+    def containerinrange(self, cdetails, selection):
+        for i in selection:
+            total = int(len(cdetails))
+            total = total - 1
             if not(self.isInt(i)):
-                print " "
-                print ("{0} isn't an integer...".format(i))
-                time.sleep(2)
+                print ("\n'{0}' isn't an integer...".format(i))
                 return False
-            if (0 <= int(i) <= foo) == False:
-                print " "
-                print ("{0} isn't a valid container number...".format(i))
-                time.sleep(2)
+            if (0 <= int(i) <= total) == False:
+                print ("\n'{0}' isn't a valid container number...".format(i))
                 return False
         return True
 
@@ -145,7 +143,6 @@ class Screen(object):
 
     def cinfo(self, cid):
         cinspect = self.c.inspect_container(cid)
-        # foo = self.
         self.pid = cinspect['State']['Pid']
         self.isRunning = True if cinspect['State']['Running'] is True else False
 
@@ -226,8 +223,8 @@ class Containers(Screen):
         mycontainers = screen.c.containers(quiet=False, all=allcontains, trunc=True, latest=False, since=None, before=None, limit=-1)
         cons.pheader("Containers")
         if len(mycontainers) != 0:
-            print ('\n{0:2} {1:12} {2:25} {3:8}'.format(" #", "ID", "Image", "Status"))
-            print ('{0:2} {1:12} {2:25} {3:8}'.format(" -", "--", "-----", "------"))
+            print ('\n{0:2} {1:12} {2:25} {3:8} {4:20}'.format(" #", "ID", "Image", "Status", "Associated JSON file"))
+            print ('{0:2} {1:12} {2:25} {3:8} {4:20}'.format(" -", "--", "-----", "------", "--------------------"))
             for s in range(len(mycontainers)):
                 chostname, cimage, crun = self.getcontainersummary(mycontainers[s])
                 print ('{0:2} {1:12} {2:25} {3:8}'.format(s, chostname, cimage, crun))
@@ -237,19 +234,20 @@ class Containers(Screen):
         print "Display: <container context> (i)mage-context | show-(a)ll (re)fresh"
         print "Command: (r)un (s)top s(n)apshot (d)elete (e)nter (l)ogs (q)uit"
         print " "
-        containernum = raw_input("Action: ")
-        if containernum.upper() == "A":
+        cons = GetContainer()
+        action = raw_input("Action: ")
+        if action.upper() == "A":
             if allcontains == True:
                 allcontains = False
             else:
                 allcontains = True
-        if containernum.upper() == "I":
+        if action.upper() == "I":
             images.printimagesummary()
-        if containernum.upper() == "X":
+        if action.upper() == "X":
             self.printsummary()
-        if containernum.upper() == "Q":
+        if action.upper() == "Q":
             quit()
-        if containernum.upper() == "S":
+        if action.upper() == "S":
             stopcontainer = cons.getcontainer(mycontainers)
             if not cons.status:
                 self.printsummary()
@@ -259,7 +257,6 @@ class Containers(Screen):
                 self.cinfo(cid)
                 if not self.isRunning:
                     print "%s is not running" % cid
-                    time.sleep(1)
                     # break
                 t = threading.Thread(target=screen.stopcontainers, args=(cid, self.pid,))
 
@@ -269,7 +266,7 @@ class Containers(Screen):
             [x.join() for x in stopthreads]
             self.printsummary()
 
-        if containernum.upper() == "R":
+        if action.upper() == "R":
             startthreads = []
             runcontainer = cons.getcontainer(mycontainers)
             if not cons.status:
@@ -283,7 +280,7 @@ class Containers(Screen):
             print "Waiting for containers to start"
             [x.join() for x in startthreads]
 
-        if containernum.upper() == "D":
+        if action.upper() == "D":
             cdetails = self.getcontainerinfo(mycontainers)
             delcontainer = cons.getcontainer(cdetails)
             if not cons.status:
@@ -298,7 +295,7 @@ class Containers(Screen):
                     print "{0}{1} is already running. Please stop before deleting.{2}".format(color.BOLD, cid, color.END)
                     print " "
 
-        if containernum.upper() == "E":
+        if action.upper() == "E":
             cdetails = self.getcontainerinfo(mycontainers)
             entercontainer = cons.getcontainer(cdetails)
             if not cons.status:
@@ -306,15 +303,13 @@ class Containers(Screen):
             if entercontainer != False:
                 for container in entercontainer:
                     if not self.isRunning(mycontainers, container):
-                        print " "
-                        print ("{0} is not a running container".format(self.returnuid(cdetails, container)))
-                        time.sleep(2)
+                        print ("\n{0} is not a running container".format(self.returnuid(cdetails, container)))
                         self.printsummary()
                     cid = self.returnuid(mycontainers, container)
                     cpid = self.getpid(cid)
                     print "Entering container %s" % self.returnuid(cdetails, container)
                     self.terminal2(cpid)
-        if containernum.upper() == "L":
+        if action.upper() == "L":
             logcons = cons.getcontainer(mycontainers)
             if cons.status is not False:
                 for container in logcons:
@@ -326,17 +321,18 @@ class Containers(Screen):
                     print "{0}{1}-----------------------------------------{2}".format(color.RED, color.BOLD, color.END)
                     print " "
 
-        if containernum.upper() == "N":
+        if action.upper() == "N":
             snapcons = cons.getcontainer(mycontainers)
-            for snaps in snapcons:
-                cid = self.returnuid(mycontainers, snaps)
-                kwargs = {'cuid': self.returnuid(mycontainers, snaps),
-                          'outfile': None,
-                          'directory': None,
-                          'force': True}
+            if cons.status is not False:
+                for snaps in snapcons:
+                    cid = self.returnuid(mycontainers, snaps)
+                    kwargs = {'cuid': self.returnuid(mycontainers, snaps),
+                              'outfile': None,
+                              'directory': None,
+                              'force': True}
 
-                create = metadata.Create(**kwargs)
-                create.write_files()
+                    create = metadata.Create(**kwargs)
+                    create.write_files()
 
         self.printsummary()
 
@@ -443,6 +439,7 @@ class Images(Screen):
                     mydict = {'Id': d['Id'][:25], 'Image': d['Config']['Image'], 'Name': d['Name'], 'State': state, 'Pid': d['State']['Pid']}
                     delcontainers.append(mydict)
         return delcontainers
+        print " "
 
     def printimagesummary(self):
         global myscreen
@@ -464,11 +461,10 @@ class Images(Screen):
                 isize = self.convertsize(float(images[s]['VirtualSize']))
                 print ('{0:2} {1:20} {2:10} {3:18} {4:8}'.format(s, imagedesc, images[s]['Id'][:8], created, isize))
         else:
-            print "No images ..."
-        print " "
-        print "Display: (c)ontainer-context <image context> | (re)fresh (a)ll"
-        print "Command: (r)un (d)elete (q)uit (n)ew from json"
-        print " "
+            print "No images to display."
+        print "\nDisplay: (c)ontainer-context <image context> | (re)fresh (a)ll"
+        print "Command: (r)un (d)elete (q)uit (a)dd from json\n"
+        cons = GetContainer()
         containers = Containers()
         containernum = raw_input("Action: ")
         if containernum.upper() == "A":
@@ -524,7 +520,6 @@ class Images(Screen):
                 print "Created new container: {0}".format(cons.cid)
                 print "Warnings for creating {0}: {1}".format(cons.cid[:8], cons.warnings)
                 containers.startcontainers(cons.cid)
-            time.sleep(2)
 
         if containernum.upper() == "N":
             # create = metadata.Create(**kwargs)
