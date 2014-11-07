@@ -31,7 +31,7 @@ dellist = []
 parser = argparse.ArgumentParser()
 parser.add_argument("-a", "--all", help="Work with non-active containers too", action="store_true")
 parser.add_argument("-i", "--images", help="Jump into the images interface", action="store_true")
-parser.add_argument("-d","--delete", help="Delete all images without going into docker-dash", action="store_true")
+parser.add_argument("-d", "--delete", help="Delete all images without going into docker-dash", action="store_true")
 
 args = parser.parse_args()
 
@@ -47,6 +47,7 @@ if args.all:
     print "View all containers"
     allcontains = True
 
+
 class GetContainer:
 
     def getcontainer(self, cdetails):
@@ -59,14 +60,14 @@ class GetContainer:
             return
         elif stopcontainers == "all":
             self.status = True
-            return self.str2list(str("0-{0}".format(len(cdetails) -1)))
+            return self.str2list(str("0-{0}".format(len(cdetails) - 1)))
 
         stopcontainers = self.str2list(stopcontainers)
         if self.containerinrange(cdetails, stopcontainers) is False:
             self.status = False
         else:
             self.status = True
-        
+
         return stopcontainers
 
     def str2list(self, inlist):
@@ -99,7 +100,6 @@ class GetContainer:
                 time.sleep(2)
                 return False
         return True
-    
 
     def isInt(self, mystr):
         try:
@@ -108,7 +108,7 @@ class GetContainer:
         except ValueError:
             return False
 
-    def createconfromimage(self, irepo,c):
+    def createconfromimage(self, irepo, c):
         irun = c.create_container(image=irepo)
         self.cid = irun['Id']
         self.warnings = irun['Warnings']
@@ -135,8 +135,8 @@ class Screen(object):
             print "Unable to find that container ..."
 
     def cinfo(self, cid):
-        cinspect =  self.c.inspect_container(cid)
-        #foo = self.
+        cinspect = self.c.inspect_container(cid)
+        # foo = self.
         self.pid = cinspect['State']['Pid']
         self.isRunning = True if cinspect['State']['Running'] is True else False
 
@@ -181,13 +181,13 @@ class Containers(Screen):
 
     def runcontainer(self, cid, mycontainers):
         self.cinfo(cid)
-        cdetails = self.getcontainerinfo(mycontainers)
+        self.getcontainerinfo(mycontainers)
         if self.isRunning:
             print "{0}{1} is already running {2}".format(color.BOLD, cid, color.END)
             time.sleep(1)
             return "", False
         else:
-            print "Starting {0}".format(cid) 
+            print "Starting {0}".format(cid)
             t = threading.Thread(target=screen.startcontainers, args=(cid,))
             return t, True
 
@@ -203,7 +203,6 @@ class Containers(Screen):
         else:
             crun = "Not Running"
         return cuid[:8], cimage, crun
-
 
     def getuserjsons(self):
         jsons = []
@@ -323,18 +322,19 @@ class Containers(Screen):
                     print " "
 
         if containernum.upper() == "N":
-            snapcons =  cons.getcontainer(mycontainers)
+            snapcons = cons.getcontainer(mycontainers)
             for snaps in snapcons:
                 cid = self.returnuid(mycontainers, snaps)
-                kwargs = {'cuid': self.returnuid(mycontainers, snaps), 
+                kwargs = {'cuid': self.returnuid(mycontainers, snaps),
                           'outfile': None,
                           'directory': None,
-                          'force': True }
+                          'force': True}
 
                 create = metadata.Create(**kwargs)
                 create.write_files()
 
         self.printsummary()
+
 
 class color:
     PURPLE = '\033[95m'
@@ -347,8 +347,6 @@ class color:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
     END = '\033[0m'
-
-
 
 
 class Images(Screen):
@@ -440,9 +438,6 @@ class Images(Screen):
                     delcontainers.append(mydict)
         return delcontainers
 
-
-
-
     def printimagesummary(self):
         global myscreen
         global allcontains
@@ -464,10 +459,10 @@ class Images(Screen):
             print "No images ..."
         print " "
         print "Display: (c)ontainer-context <image context> | (re)fresh"
-        print "Command: (r)un (d)elete (q)uit"
+        print "Command: (r)un (d)elete (q)uit (a)dd from json"
         print " "
         cons = GetContainer()
-        containers = Containers() 
+        containers = Containers()
         containernum = raw_input("Action: ")
         if containernum.upper() == "A":
             if allcontains == True:
@@ -514,7 +509,7 @@ class Images(Screen):
         if containernum.upper() == "R":
             runimages = cons.getcontainer(images)
             for i in runimages:
-                #irepo = images[int(i)]['RepoTags'][0].split(':')[0]
+                # irepo = images[int(i)]['RepoTags'][0].split(':')[0]
                 irepo = images[int(i)]['RepoTags'][0]
                 print images[int(i)]
                 print "irepo = {0} self.c = {1}".format(irepo, self.c)
@@ -523,6 +518,8 @@ class Images(Screen):
                 print "Warnings for creating {0}: {1}".format(cons.cid[:8], cons.warnings)
                 containers.startcontainers(cons.cid)
             time.sleep(2)
+
+        if containernum.upper() == "A":
         self.printimagesummary()
 
 
@@ -530,7 +527,7 @@ class CommandLine(object):
 
     def deleteall(self):
         global dellist
-        getcons = GetContainer() 
+        getcons = GetContainer()
         cons = screen.c.containers(all=True)
         if len(cons) > 0:
             print "Making sure all containers are stopped."
@@ -563,13 +560,13 @@ if __name__ == '__main__':
     commands = CommandLine()
     if args.delete is True:
         print " "
-        yes = set(['yes','y', 'ye'])
+        yes = set(['yes', 'y', 'ye'])
         choice = raw_input('Delete all images and containers? Yes / No: ').lower()
         if choice in yes:
             commands.deleteall()
         else:
             print "Exiting Now."
-            sys.exit()
+            exit()
     else:
         if myscreen == "containers":
             containers.printsummary()

@@ -24,6 +24,7 @@ from string import Template
 USER_TEMPLATE_DIR = "/var/container-template/user/"
 SYSTEM_TEMPLATE_DIR = "/var/container-template/system/"
 
+
 class Create(object):
     def __init__(self, **kwargs):
         self.cuid = kwargs['cuid']
@@ -37,13 +38,12 @@ class Create(object):
         else:
             return False
 
-
     def assembledict(self, mykeys, dockjson):
         # not used
         # instead of re-building the json, we take the whole thing
-        userdict = {'UserParams': {'restart': '', 'rm': '' , 'dockercommand': '',
-                                 'sig-proxy':''
-                                }}
+        userdict = {'UserParams': {'restart': '', 'rm': '', 'dockercommand': '',
+                                   'sig-proxy': ''
+                                   }}
         mydict = []
         for desc in mykeys:
             newdict = {desc: {}}
@@ -51,11 +51,10 @@ class Create(object):
                 newdict[desc][keys] = dockjson[desc][keys]
             mydict.append(newdict)
         if dockjson['Name'] != "":
-            namedict = {'Name': dockjson['Name'] }
+            namedict = {'Name': dockjson['Name']}
             mydict.append(namedict)
         mydict.append(userdict)
         return mydict
-
 
     def checkcontaineruid(self):
         """Checks ID and returns valid containeruid. Accepts partial UID"""
@@ -69,7 +68,7 @@ class Create(object):
         else:
             match = [containeruid for containeruid in containeruids if re.match(self.cuid, containeruid)]
             if match:
-                 return match[0]
+                return match[0]
             else:
                 print "Unable to find container ID '%s'. Try 'docker ps'." % self.cuid
                 quit(1)
@@ -114,13 +113,13 @@ class Create(object):
 
     def metadata_file(self):
         # FIXME: populate these values
-        userdict = {'UserParams': {'restart': '', 'rm': '' , 'dockercommand': '',
-                                 'sig-proxy':''
-                                }}
+        userdict = {'UserParams': {'restart': '', 'rm': '', 'dockercommand': '',
+                                   'sig-proxy': ''
+                                   }}
 
         # instead of re-building the json, we take the whole thing
         # TODO: filter out the irrelevant keys
-        #configkeys = {'Config': {'AttachStderr', 'AttachStdin', 'AttachStdout',
+        # configkeys = {'Config': {'AttachStderr', 'AttachStdin', 'AttachStdout',
         #                         'Cmd', 'CpuShares', 'Cpuset', 'Env', 'Hostname',
         #                         'Image', 'Memory', 'Tty', 'User', 'WorkingDir'
         #                         },
@@ -187,10 +186,10 @@ WantedBy=multi-user.target
 """
 
     def sysd_unit_file(self):
-        confcmd = "" if self.container_json['Config']['Cmd'] == None else self.container_json['Config']['Cmd']
+        confcmd = "" if self.container_json['Config']['Cmd'] is None else self.container_json['Config']['Cmd']
         cmd = ' '.join(confcmd)
         repl_dict = {'name': self.container_json['Name'],
-            'cmd': cmd}
+                     'cmd': cmd}
         template = Template(self.sysd_unit_template)
         template = template.substitute(repl_dict)
         unit_filename = self.outname.replace('.json', '.service')
@@ -201,15 +200,21 @@ WantedBy=multi-user.target
         self.kubernetes_file()
         self.sysd_unit_file()
 
+
 class List(object):
     def __init__(self):
         self.pattern = 'service|json$'
 
-    def metadata_files(self):
+    def list_all(self):
         dirlist = [USER_TEMPLATE_DIR, SYSTEM_TEMPLATE_DIR]
-        files = [d + f for d in dirlist for f in os.listdir(d) if re.search(self.pattern, f)]
+        files = self.metadata_files(dirlist)
         for f in files:
             print f
+
+    def metadata_files(self, dirlist):
+        files = [d + f for d in dirlist for f in os.listdir(d) if re.search(self.pattern, f)]
+        return files
+
 
 class Pull(object):
     def __init__(self, **kwargs):
