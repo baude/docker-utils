@@ -172,9 +172,9 @@ class Run(object):
         djs = DockerJSON()
         params = self.load_json()
         djs.parsejson(params)
-        if not imagecommands.imageExistsByName(djs.image):
+        if not imagecommands.imageExistsByName(djs.configimage):
             print "Pulling image..."
-            dcons.c.pull(djs.image)
+            dcons.c.pull(djs.configimage)
         newcontainer = dcons.c.create_container(djs.image, None, djs.hostname, djs.user,
                        None, None, None, djs.mem_limit, djs.ports, djs.environment, djs.dns,
                        djs.volumes, djs.volumes_from, djs.network_disabled, djs.name,
@@ -191,6 +191,8 @@ class Run(object):
 class DockerJSON(object):
 
     def parsejson(self, params):
+
+        self.configimage = params[0]['Config']['Image']
 
         # Container Create
 
