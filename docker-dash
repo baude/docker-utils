@@ -128,7 +128,7 @@ class Screen(object):
 
     def stopcontainers(self, cid, cpid):
         print "Stopping {0}".format(cid)
-        self.c.stop(cid, None)
+        self.c.stop(cid, timeout = 0)
         lambda: os.waitpid(cpid, 0)
 
     def startcontainers(self, cid):
@@ -574,6 +574,10 @@ class CommandLine(object):
 
     def deleteall(self):
         global dellist
+        allimages = screen.c.images(name=None, quiet=False, all=True, viz=False)
+        if len(allimages) < 1:
+            print "There are no images to delete."
+            exit(1)
         getcons = GetContainer()
         cons = screen.c.containers(all=True)
         if len(cons) > 0:
@@ -588,13 +592,11 @@ class CommandLine(object):
                 screen.deletecontainer(d['Id'])
 
         print "Deleting images..."
-        allimages = screen.c.images(name=None, quiet=False, all=True, viz=False)
         for d in allimages:
             imagelist = []
             iid = d['Id']
             dellist.append(iid)
             imagelist = images.crawl(iid, allimages)
-
         for i in reversed(imagelist):
             images.deleteimage(i)
         del imagelist[:]
