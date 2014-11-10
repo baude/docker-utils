@@ -83,7 +83,7 @@ class Create(object):
             quit(1)
         with open(outname, "w") as outfile:
             if filetype is "json":
-                json.dump(vals, outfile, indent=4)
+                json.dump(vals, outfile, indent=2)
             else:
                 outfile.write(vals)
         outfile.closed
@@ -117,53 +117,60 @@ class Create(object):
                                    'sig-proxy': ''
                                    }}
 
-        # instead of re-building the json, we take the whole thing
-        # TODO: filter out the irrelevant keys
-        # configkeys = {'Config': {'AttachStderr', 'AttachStdin', 'AttachStdout',
-        #                         'Cmd', 'CpuShares', 'Cpuset', 'Env', 'Hostname',
-        #                         'Image', 'Memory', 'Tty', 'User', 'WorkingDir'
-        #                         },
-        #              'HostConfig': {'Binds', 'CapAdd', 'CapDrop', 'ContainerIDFile', 'Dns',
-        #                             'DnsSearch', 'Links', 'LxcConf', 'NetworkMode',
-        #                             'PortBindings', 'Privileged', 'PublishAllPorts'
-        #                             }
-        #              }
-
         vals = [self.container_json, userdict]
         self.writeoutput(vals, self.outname)
 
     def kubernetes_file(self):
+        # FIXME: support list of containers
         kube_file = self.outname.replace('.json', '-pod.json')
-        schema = self.kube_schema
-        # FIXME: need a better way to iterate over
-        schema.update({'labels': {'name': self.container_json['Name']}})
-        self.writeoutput(schema, kube_file)
+        env = []
+        for e in self.container_json['Config']['Env']:
+            k,v = e.split('=')
+            env.append({ "name": k, "value": v })
 
-    @property
-    def kube_schema(self):
+        volumeMounts = []
+        vols = []
+        for k,v in self.container_json['Volumes'].iteritems():
+            name = v.replace('/', '')
+            volumeMounts.append({ "name": name,
+                                  "readOnly": self.container_json["VolumesRW"][k],
+                                  "mountPath": k })
+            vols.append({ "name": name,
+                          "source": { "hostDir": { "path": v }}})
+
+        ports = []
+        for k,v in self.container_json["HostConfig"]["PortBindings"].iteritems():
+            port, protocol = k.split('/')
+            # FIXME: support list of host ports
+            ports.append({ "containerPort": port,
+                           "hostPort": v[0]['HostPort'] })
+        pod = self.kube_pod(env=env, volumeMounts=volumeMounts, vols=vols, ports=ports)
+        self.writeoutput(pod, kube_file)
+
+    def kube_pod(self, **kwargs):
+    #def kube_pod(self, env=None, volumeMounts=None, vols=None, ports=None):
         return {
             "kind": "Pod",
-            "id": None,
+            "id": self.container_json['Name'],
+            "labels": { "name": self.container_json['Name']},
             "apiVersion": "v1beta1",
             "namespace": None,
             "creationTimestamp": None,
             "selfLink": None,
             "desiredState": {
-                "manifest": {
-                    "version": "v1beta1",
-                    "id": None,
-                    "containers": [{
-                        "name": None,
-                        "image": None,
-                        "ports": [{
-                            "containerPort": 6379,
-                            "hostPort": 6379
-                        }]
-                    }]
-                }
-            },
-            "labels": {
-                "name": None
+              "manifest": {
+                "version": "v1beta1",
+                "id": None,
+                "containers": [{
+                  "name": self.container_json['Name'],
+                  "image": self.container_json['Config']['Image'],
+                  "command": self.container_json['Config']['Cmd'],
+                  "env": kwargs['env'],
+                  "ports": kwargs['ports'],
+                  "volumeMounts": kwargs['volumeMounts']
+                }],
+                "volumes": kwargs['vols']
+              }
             }
         }
 
