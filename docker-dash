@@ -61,8 +61,8 @@ class GetContainer:
                 return
             elif selection == "all":
                 self.status = True
-                break
                 return self.str2list(str("0-{0}".format(len(cdetails) - 1)))
+                break
             else:
                 selection = self.str2list(selection)
                 if self.containerinrange(cdetails, selection) is False:
@@ -396,6 +396,7 @@ class Images(Screen):
             return imagenode
         else:
             return imagenode
+    
 
     def crawl(self, nodeid, images):
         global dellist
@@ -416,7 +417,7 @@ class Images(Screen):
         else:
             if self.imageexists(iid):
                 print "Deleting {0}".format(iid)
-                self.c.remove_image(iid)
+                self.c.remove_image(iid, force = True)
 
     def checkforcontainers(self, imagelist):
         delcontainers = []
@@ -444,6 +445,7 @@ class Images(Screen):
                     delcontainers.append(mydict)
         return delcontainers
         print " "
+
 
     def printimagesummary(self):
         global myscreen
@@ -486,6 +488,7 @@ class Images(Screen):
             global dellist
             delimages = cons.getcontainer(images)
             allimages = screen.c.images(name=None, quiet=False, all=True, viz=False)
+            
             for d in delimages:
                 imagelist = []
                 iid = images[int(d)]['Id']
