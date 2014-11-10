@@ -139,11 +139,13 @@ class Create(object):
                           "source": { "hostDir": { "path": v }}})
 
         ports = []
-        for k,v in self.container_json["HostConfig"]["PortBindings"].iteritems():
-            port, protocol = k.split('/')
-            # FIXME: support list of host ports
-            ports.append({ "containerPort": port,
-                           "hostPort": v[0]['HostPort'] })
+        if type(self.container_json["HostConfig"]["PortBindings"]) == dict:
+            if len(self.container_json["HostConfig"]["PortBindings"]) > 0 :
+                for k,v in self.container_json["HostConfig"]["PortBindings"].iteritems():
+                    port, protocol = k.split('/')
+                    # FIXME: support list of host ports
+                    ports.append({ "containerPort": port,
+                                   "hostPort": v[0]['HostPort'] })
         pod = self.kube_pod(env=env, volumeMounts=volumeMounts, vols=vols, ports=ports)
         self.writeoutput(pod, kube_file)
 

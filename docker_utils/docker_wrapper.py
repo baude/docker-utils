@@ -42,7 +42,8 @@ class Run(object):
         try:
             # jsonschema.validate(json.loads(json_data), json.loads(json_schema))
             json_data = open(self.jsonfile)
-            return json.load(json_data)
+            foobar = json.load(json_data)
+            return foobar
 
         except:
             # FIXME
@@ -166,6 +167,23 @@ class Run(object):
                 return True
         return False
 
+    def buildconfig(self, params):
+        djs = DockerJSON()
+        params = self.load_json()
+        djs.parsejson(params)
+
+        kwargs = {
+                'image': djs.image, 'command': djs.cmd, 'hostname': djs.hostname,
+                'user': djs.user, 'detach': False, 'stdin_open': False, 'tty': 'False',
+                'mem_limit': djs.mem_limit, 'ports': djs.ports, 'environment': djs.environment,
+                'dns': djs.dns, 'volumes': djs.volumes, 'volumes_from': djs.volumes_from,
+                'network_disabled': djs.network_disabled, 'name': djs.name,
+                'entrypoint': djs.entrypoint, 'cpu_shares': djs.cpu_shares,
+                'working_dir': djs.working_dir, 'domainname': djs.domainname,
+                'memswap_limit': djs.memswap_limit
+                }
+        return kwargs
+        
     def start_container(self):
         imagecommands = ImageFunctions()
         dcons = MakeDConnect()
@@ -174,13 +192,14 @@ class Run(object):
         djs.parsejson(params)
         if not imagecommands.imageExistsByName(djs.configimage):
             print "Pulling image..."
-            dcons.c.pull(djs.configimage)
-        newcontainer = dcons.c.create_container(djs.image, None, djs.hostname, djs.user,
-                       None, None, None, djs.mem_limit, djs.ports, djs.environment, djs.dns,
-                       djs.volumes, djs.volumes_from, djs.network_disabled, djs.name,
-                       djs.entrypoint, djs.cpu_shares, djs.working_dir, djs.domainname, djs.memswap_limit)
+            dcons.c.pull(djs.configimage, insecure_registry = True)
+        kwargs = self.buildconfig(params)
+        for k,v in kwargs.iteritems():
+            print k, v
+        newcontainer = dcons.c.create_container(**kwargs)
         print "Created new container {0}".format(newcontainer['Id'])
         dcons.c.start(newcontainer['Id'], None, djs.port_bindings, djs.lxc_conf, djs.publish_all_ports, djs.links, djs.priviledged, djs.dns, djs.dns_search, djs.volumes_from, djs.network_mode)
+        print "000000000000000000000000000000000000000000000"
         kwargs = {'cuid': newcontainer['Id'][:8], 'outfile': None, 'directory': None, 'force': True}
         create = metadata.Create(**kwargs)
         create.write_files()
@@ -191,8 +210,7 @@ class Run(object):
 class DockerJSON(object):
 
     def parsejson(self, params):
-
-        self.configimage = params[0]['Config']['Image']
+        self.configimage = params[0]['Config']['Image'] if not "" else None 
 
         # Container Create
 
@@ -203,28 +221,29 @@ class DockerJSON(object):
                          volumes=None, volumes_from=None,
                          network_disabled=False, name=None, entrypoint=None,
                          cpu_shares=None, working_dir=None, domainname=None,
-                         memswap_limit=0):
+                         memswap_limit=0, cpuset=None):
         """
-
-        self.image = params[0]['Image']
-        self.hostname = params[0]['Config']['Hostname']
-        self.user = params[0]['Config']['User']
+        self.image = params[0]['Config']['Image'] if not "" else None 
+        self.cmd = params[0]['Config']['Cmd'] if not "" else None 
+        self.hostname = params[0]['Config']['Hostname'] if not "" else None 
+        self.user = params[0]['Config']['User'] if not "" else None 
         # detach
         # stdin
         # tty
-        self.mem_limit = params[0]['Config']['MemorySwap']
-        self.ports = params[0]['NetworkSettings']['Ports']
-        self.environment = params[0]['Config']['Env']
-        self.dns = params[0]['HostConfig']['Dns']
-        self.volumes = params[0]['Config']['Volumes']
-        self.volumes_from = params[0]['HostConfig']['VolumesFrom']
-        self.network_disabled = params[0]['Config']['NetworkDisabled']
-        self.name = params[0]['Name']
-        self.entrypoint = params[0]['Config']['Entrypoint']
-        self.cpu_shares = params[0]['Config']['CpuShares']
-        self.working_dir = params[0]['Config']['WorkingDir']
-        self.domainname = params[0]['Config']['Domainname']
-        self.memswap_limit = params[0]['Config']['MemorySwap']
+        self.mem_limit = params[0]['Config']['MemorySwap'] if not "" else None 
+        self.ports = params[0]['NetworkSettings']['Ports'] if not "" else None 
+        self.environment = params[0]['Config']['Env'] if not "" else None 
+        self.dns = params[0]['HostConfig']['Dns'] if not "" else None 
+        self.volumes = params[0]['Config']['Volumes'] if not "" else None 
+        self.volumes_from = params[0]['HostConfig']['VolumesFrom'] if not "" else None 
+        self.network_disabled = params[0]['Config']['NetworkDisabled'] if not "" else None 
+        self.name = params[0]['Name'] if not "" else None 
+        self.entrypoint = params[0]['Config']['Entrypoint'] if not "" else None 
+        self.cpu_shares = params[0]['Config']['CpuShares'] if not "" else None 
+        self.working_dir = params[0]['Config']['WorkingDir'] if not "" else None 
+        self.domainname = params[0]['Config']['Domainname'] if not "" else None 
+        self.memswap_limit = params[0]['Config']['MemorySwap'] if not "" else None 
+        self.cpuset = params[0]['Config']['Cpuset'] if not "" else None 
 
         # Container Start
 
@@ -236,13 +255,13 @@ class DockerJSON(object):
 
         # binds
 
-        self.port_bindings = params[0]['HostConfig']['PortBindings']
-        self.lxc_conf = params[0]['HostConfig']['LxcConf']
-        self.publish_all_ports = params[0]['HostConfig']['PublishAllPorts']
-        self.links = params[0]['HostConfig']['Links']
-        self.priviledged = params[0]['HostConfig']['Privileged']
-        self.dns_search = params[0]['HostConfig']['DnsSearch']
-        self.network_mode = params[0]['HostConfig']['NetworkMode']
+        self.port_bindings = params[0]['HostConfig']['PortBindings'] if not "" else None 
+        self.lxc_conf = params[0]['HostConfig']['LxcConf'] if not "" else None 
+        self.publish_all_ports = params[0]['HostConfig']['PublishAllPorts'] if not "" else None 
+        self.links = params[0]['HostConfig']['Links'] if not "" else None 
+        self.priviledged = params[0]['HostConfig']['Privileged'] if not "" else None 
+        self.dns_search = params[0]['HostConfig']['DnsSearch'] if not "" else None 
+        self.network_mode = params[0]['HostConfig']['NetworkMode'] if not "" else None 
 
 
 class ImageFunctions(object):
