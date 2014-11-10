@@ -121,16 +121,34 @@ class Create(object):
         self.writeoutput(vals, self.outname)
 
     def kubernetes_file(self):
+        # FIXME: support list of containers
         kube_file = self.outname.replace('.json', '-pod.json')
-        pod = self.kube_pod
-        # FIXME: need a better way to iterate over
-        # FIXME: containers, env, ports etc is a list
-        #pod.update({'desiredState': {'manifest': {'containers': {'command': self.container_json['Config']['Cmd']}}}})
-        #pod.update({'desiredState': {'manifest': {'containers': {'image': self.container_json['Config']['Image']}}}})
+        env = []
+        for e in self.container_json['Config']['Env']:
+            k,v = e.split('=')
+            env.append({ "name": k, "value": v })
+
+        volumeMounts = []
+        vols = []
+        for k,v in self.container_json['Volumes'].iteritems():
+            name = v.replace('/', '')
+            volumeMounts.append({ "name": name,
+                                  "readOnly": self.container_json["VolumesRW"][k],
+                                  "mountPath": k })
+            vols.append({ "name": name,
+                          "source": { "hostDir": { "path": v }}})
+
+        ports = []
+        for k,v in self.container_json["HostConfig"]["PortBindings"].iteritems():
+            port, protocol = k.split('/')
+            # FIXME: support list of host ports
+            ports.append({ "containerPort": port,
+                           "hostPort": v[0]['HostPort'] })
+        pod = self.kube_pod(env=env, volumeMounts=volumeMounts, vols=vols, ports=ports)
         self.writeoutput(pod, kube_file)
 
-    @property
-    def kube_pod(self):
+    def kube_pod(self, **kwargs):
+    #def kube_pod(self, env=None, volumeMounts=None, vols=None, ports=None):
         return {
             "kind": "Pod",
             "id": self.container_json['Name'],
@@ -147,23 +165,11 @@ class Create(object):
                   "name": self.container_json['Name'],
                   "image": self.container_json['Config']['Image'],
                   "command": self.container_json['Config']['Cmd'],
-                  "env": [{
-                    "name": None,
-                    "value": None }],
-                  "ports": [{
-                    "containerPort": None,
-                    "hostPort": None
-                  }],
-                  "volumeMounts": [{
-                    "name": "mount",
-                    "readOnly": None,
-                    "mountPath": None
-                  }]
+                  "env": kwargs['env'],
+                  "ports": kwargs['ports'],
+                  "volumeMounts": kwargs['volumeMounts']
                 }],
-                "volumes": [{
-                  "name": None,
-                  "source": { "hostDir": {"path": None}}
-                }]
+                "volumes": kwargs['vols']
               }
             }
         }
