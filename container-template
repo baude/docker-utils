@@ -25,27 +25,27 @@ def main():
 
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(help='sub-command help', dest='action')
-    run_parser = subparsers.add_parser('run', help='Run a container from metadata file')
-    run_parser.add_argument('json',
-                            metavar='MYAPP.JSON',
-                            help='JSON file')
-    create_parser = subparsers.add_parser('create', help='Generate metadata based on a container')
+    create_parser = subparsers.add_parser('create', help='Create a snapshot of a container. Creates an inspect json file, a kubernetes json file and a systemd unit file.')
     create_parser.add_argument('cuid',
                                metavar='CONTAINER_ID',
                                help='Container ID')
-    create_parser.add_argument('-o', '--outfile',
+    create_parser.add_argument('-n', '--name',
                                help='Specify metadata output filename. Defaults to container ID.')
     create_parser.add_argument('-d', '--directory',
                                help='Override default directory')
     create_parser.add_argument('-f', '--force',
                                action='store_true',
                                help='Overwrite existing metadata file. Defaults to false.')
+    run_parser = subparsers.add_parser('run', help='Run a container from metadata file')
+    run_parser.add_argument('json',
+                            metavar='MYAPP.JSON',
+                            help='JSON file')
     list_parser = subparsers.add_parser('list', help='List template files on host')
     pull_parser = subparsers.add_parser('pull', help='Pull metadata files from a remote source')
     pull_parser.add_argument('url',
                              metavar='http://example.com/my-app.json',
                              help='Full URL of remote metadata file')
-    pull_parser.add_argument('-o', '--outfile',
+    pull_parser.add_argument('-n', '--name',
                              help='Specify metadata output filename')
     pull_parser.add_argument('-d', '--directory',
                              help='Override default directory')
@@ -62,7 +62,7 @@ def main():
 
     elif args.action in "create":
         kwargs = {'cuid': args.cuid,
-                  'outfile': args.outfile,
+                  'outfile': args.name,
                   'directory': args.directory,
                   'force': args.force}
         create = metadata.Create(**kwargs)
@@ -71,7 +71,7 @@ def main():
         filelist = metadata.List()
         filelist.list_all()
     elif args.action in "pull":
-        kwargs = {'outfile': args.outfile,
+        kwargs = {'outfile': args.name,
                   'directory': args.directory,
                   'force': args.force}
         fetch = metadata.Pull(**kwargs)
