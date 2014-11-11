@@ -221,7 +221,12 @@ class Containers(Screen):
         global allcontains
         cons = GetContainer()
         mycontainers = screen.c.containers(quiet=False, all=allcontains, trunc=True, latest=False, since=None, before=None, limit=-1)
-        cons.pheader("Containers")
+        if allcontains == True:
+            cmessage = "All Containers"
+        else:
+            cmessage = "Containers"
+
+        cons.pheader(cmessage)
         userjsons = self.getuserjsons()
         if len(mycontainers) != 0:
             print ('{0:2} {1:12} {2:40} {3:8} {4:20}'.format(" #", "ID", "Image", "Status", "From JSON"))
@@ -453,7 +458,11 @@ class Images(Screen):
         cons = GetContainer()
         myscreen = "images"
         images = self.c.images(name=None, quiet=False, all=allcontains, viz=False)
-        cons.pheader("Images")
+        if allcontains == True:
+            containheader = "All Images"
+        else:
+            containheader = "Images"
+        cons.pheader(containheader)
         # Map is: Created, VirtualSize, RepoTags[], Id
         print " "
         if len(images) > 0:
