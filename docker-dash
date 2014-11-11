@@ -224,14 +224,14 @@ class Containers(Screen):
         cons.pheader("Containers")
         userjsons = self.getuserjsons()
         if len(mycontainers) != 0:
-            print ('{0:2} {1:12} {2:25} {3:8} {4:20}'.format(" #", "ID", "Image", "Status", "From JSON"))
-            print ('{0:2} {1:12} {2:25} {3:8} {4:20}'.format("--", "--", "-----", "------", "-----------"))
+            print ('{0:2} {1:12} {2:40} {3:8} {4:20}'.format(" #", "ID", "Image", "Status", "From JSON"))
+            print ('{0:2} {1:12} {2:40} {3:8} {4:20}'.format("--", "--", "-----", "------", "-----------"))
             for s in range(len(mycontainers)):
                 userjson = ""
                 chostname, cimage, crun = self.getcontainersummary(mycontainers[s])
                 if any(chostname in uj for uj in userjsons):
                     userjson = "*"
-                print ('{0:2} {1:12} {2:25} {3:8} {4:20}'.format(s, chostname, cimage, crun, userjson))
+                print ('{0:2} {1:12} {2:40} {3:8} {4:20}'.format(s, chostname, cimage, crun, userjson))
         else:
             print "No active containers ..."
         print " "

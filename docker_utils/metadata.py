@@ -100,7 +100,9 @@ class Create(object):
         if self.outfile:
             out = self.outfile
         else:
-            name = self.container_json['Name'].replace('/', '', 1)
+            name = self.container_json['Name']
+            if "/" in name:
+                name = name.replace('/', '', 1)
             if '_' in name:
                 lname, rname = name.split('_')
                 lmatch = [s for s in self.docker_names['left'] if lname == s]
@@ -151,15 +153,21 @@ class Create(object):
     @property
     def container_json(self):
         self.cuid = self.checkcontaineruid()
+        cins = self.c.inspect_container(self.cuid)
 
-        # Do I need to check if they are running?
-        # docker inspect works on images and contianers
-        # check if cuid is in the 'docker ps -a' list?
+        # Remove certain entries
+        cins['HostsPath'] = ""
+        cins['Image'] = ""
+        cins['State']['FinishedAt'] = ""
+        cins['State']['StartedAt'] = ""
+        cins['ResolvConfPath'] = ""
+        cins['HostnamePath'] = ""
+        cins['Config']['Hostname'] = ""
+        cins['Id'] = ""
+        # cins['Name'] = ""
 
-        mycommand = "docker inspect %s" % self.cuid
-        containerproc = subprocess.Popen([mycommand],
-                                         stdout=subprocess.PIPE, shell=True)
-        return json.loads(containerproc.stdout.read())[0]
+        return cins
+
 
     def metadata_file(self):
         # FIXME: populate these values
