@@ -466,15 +466,16 @@ class Images(Screen):
         # Map is: Created, VirtualSize, RepoTags[], Id
         print " "
         if len(images) > 0:
-            print ('{0:2} {1:20} {2:10} {3:18} {4:8}'.format(" #", "Repo", "Image ID ", "Created", "Size"))
-            print ('{0:2} {1:20} {2:10} {3:18} {4:8}'.format(" -", "----", "-------- ", "-------", "----"))
+            print ('{0:2} {1:40} {2:10} {3:18} {4:8}'.format(" #", "Repo", "Image ID ", "Created", "Size"))
+            print ('{0:2} {1:40} {2:10} {3:18} {4:8}'.format(" -", "----", "-------- ", "-------", "----"))
             for s in range(len(images)):
-                imagedesc = images[s]['RepoTags'][0].split(':')[0]
-                if len(images[s]['RepoTags']) > 1:
-                    imagedesc = imagedesc + ":" + images[s]['RepoTags'][0].split(':')[1]
+                #imagedesc = images[s]['RepoTags'][0].split(':')[0]
+                imagedesc = images[s]['RepoTags'][0][:39]
+                #if len(images[s]['RepoTags']) > 1:
+                 #   imagedesc = imagedesc + ":" + images[s]['RepoTags'][0].split(':')[1]
                 created = time.strftime("%d %b %y %H:%M", time.localtime(images[s]['Created']))
                 isize = self.convertsize(float(images[s]['VirtualSize']))
-                print ('{0:2} {1:20} {2:10} {3:18} {4:8}'.format(s, imagedesc, images[s]['Id'][:8], created, isize))
+                print ('{0:2} {1:40} {2:10} {3:18} {4:8}'.format(s, imagedesc, images[s]['Id'][:8], created, isize))
         else:
             print "No images to display."
         print "\nDisplay: (c)ontainer-context <image context> | (re)fresh (a)ll"
