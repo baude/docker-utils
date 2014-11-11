@@ -224,8 +224,8 @@ class Containers(Screen):
         cons.pheader("Containers")
         userjsons = self.getuserjsons()
         if len(mycontainers) != 0:
-            print ('\n{0:2} {1:12} {2:25} {3:8} {4:20}'.format(" #", "ID", "Image", "Status", "From JSON"))
-            print ('{0:2} {1:12} {2:25} {3:8} {4:20}'.format(" -", "--", "-----", "------", "-----------"))
+            print ('{0:2} {1:12} {2:25} {3:8} {4:20}'.format(" #", "ID", "Image", "Status", "From JSON"))
+            print ('{0:2} {1:12} {2:25} {3:8} {4:20}'.format("--", "--", "-----", "------", "-----------"))
             for s in range(len(mycontainers)):
                 userjson = ""
                 chostname, cimage, crun = self.getcontainersummary(mycontainers[s])
@@ -457,7 +457,7 @@ class Images(Screen):
         # Map is: Created, VirtualSize, RepoTags[], Id
         print " "
         if len(images) > 0:
-            print ('\n{0:2} {1:20} {2:10} {3:18} {4:8}'.format(" #", "Repo", "Image ID ", "Created", "Size"))
+            print ('{0:2} {1:20} {2:10} {3:18} {4:8}'.format(" #", "Repo", "Image ID ", "Created", "Size"))
             print ('{0:2} {1:20} {2:10} {3:18} {4:8}'.format(" -", "----", "-------- ", "-------", "----"))
             for s in range(len(images)):
                 imagedesc = images[s]['RepoTags'][0].split(':')[0]
@@ -469,7 +469,7 @@ class Images(Screen):
         else:
             print "No images to display."
         print "\nDisplay: (c)ontainer-context <image context> | (re)fresh (a)ll"
-        print "Command: (r)un (d)elete (q)uit (n)new from json\n"
+        print "Command: (r)un (d)elete (q)uit (n)ew from JSON\n"
         cons = GetContainer()
         containers = Containers()
         containernum = raw_input("Action: ")
@@ -537,7 +537,7 @@ class Images(Screen):
                 self.printimagesummary()
 
             self.printsystemtemplates(systemps)
-            tempchoice = raw_input("Which template: ")
+            tempchoice = raw_input("Which template? (a)bort: ")
             inputbool, checkmsg = self.checktempchoice(tempchoice, len(systemps))
             if not inputbool:
                 print " "
@@ -562,12 +562,15 @@ class Images(Screen):
         print " "
 
     def checktempchoice(self, tempchoice, length):
+        if tempchoice is "a":
+            return False, "Aborting"
         cons = GetContainer()
         if not cons.isInt(tempchoice):
             return False, "Choice is not an integer"
-        if int(tempchoice) not in range(0, int(length)):
+        elif int(tempchoice) not in range(0, int(length)):
             return False, "Choice is not in range"
-        return True, ""
+        else:
+            return True, None
 
 
 class CommandLine(object):
