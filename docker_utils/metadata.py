@@ -20,6 +20,7 @@ import subprocess
 import json
 import re
 from string import Template
+import docker
 
 USER_TEMPLATE_DIR = "/var/container-template/user/"
 SYSTEM_TEMPLATE_DIR = "/var/container-template/system/"
@@ -31,6 +32,7 @@ class Create(object):
         self.force = kwargs['force']
         self.outfile = kwargs['outfile']
         self.directory = kwargs['directory']
+        self.c = docker.Client(base_url='unix://var/run/docker.sock', version='1.12', timeout=10)
 
     def outfileexists(self, outname):
         if os.path.isfile(outname):
@@ -58,10 +60,13 @@ class Create(object):
 
     def checkcontaineruid(self):
         """Checks ID and returns valid containeruid. Accepts partial UID"""
-        proc = subprocess.Popen(["docker ps -q"],
-                                stdout=subprocess.PIPE, shell=True)
-        out = proc.stdout.read()
-        containeruids = out.split()
+        containers = self.c.containers(all=True)
+        containeruids = []
+
+        # Create container list, keeps ABI with previous use without API
+
+        for container in containers:
+            containeruids.append(container['Id'])
         if not len(self.cuid) >= 3:
             print "Container ID must be at least 3 characters"
             quit(1)

@@ -47,7 +47,7 @@ class Run(object):
 
         except:
             # FIXME
-            print "no worky"
+            print "The json is no good"
             return False
         # except jsonschema.ValidationError as e:
         #    raise e.message
@@ -167,39 +167,99 @@ class Run(object):
                 return True
         return False
 
-    def buildconfig(self, params):
-        djs = DockerJSON()
-        params = self.load_json()
-        djs.parsejson(params)
+    
+    def returnVolumeList (self, volumes):
+        if type(volumes) is not dict:
+            return None
+        vollist = []
+        for k, v in volumes.iteritems():
+            vollist.append(v)
+        return vollist
 
+    def returnVolumeBinds(self, volumes, volumesrw):
+        if type(volumes) is not dict:
+            return None
+        voldict = {}
+        for k, v in volumes.iteritems():
+            if k in volumesrw:
+                perm = volumesrw[k]
+                # The docker-py API does this in inverse!
+                if perm is True:
+                    perm = False
+                else:
+                    perm = True
+                voldict[k] = {'bind': v, 'ro': perm}
+                print voldict[k]
+        return voldict
+
+    def returnPortList(self, djs):
+        portlist = []
+        portbind = {}
+        if djs.ports is not None:
+            for k, v in djs.ports.iteritems():
+                p = k.split("/")
+                portlist.append((int(p[0]), p[1]))
+                if type(v) != list:
+                    portbind[int(p[0])] = v
+                else:
+                    portbind[int(p[0])] = (v[0]['HostIp'], int(v[0]['HostPort']))
+            djs.portlist = portlist
+            djs.portbinding = portbind
+        else:
+            djs.portlist = None
+            djs.portbinding = None
+
+    def buildconfig(self, params, djs):
+        #djs = DockerJSON()
+        #params = self.load_json()
+        #djs.parsejson(params)
+
+        vollist = self.returnVolumeList(djs.volumes)
+        self.returnPortList(djs)
         kwargs = {
                 'image': djs.image, 'command': djs.cmd, 'hostname': djs.hostname,
                 'user': djs.user, 'detach': False, 'stdin_open': False, 'tty': 'False',
-                'mem_limit': djs.mem_limit, 'ports': djs.ports, 'environment': djs.environment,
-                'dns': djs.dns, 'volumes': djs.volumes, 'volumes_from': djs.volumes_from,
+                'mem_limit': djs.mem_limit, 'ports': djs.portlist, 'environment': djs.environment,
+                'dns': djs.dns, 'volumes': vollist, 'volumes_from': djs.volumes_from,
                 'network_disabled': djs.network_disabled, 'name': djs.name,
                 'entrypoint': djs.entrypoint, 'cpu_shares': djs.cpu_shares,
                 'working_dir': djs.working_dir, 'domainname': djs.domainname,
                 'memswap_limit': djs.memswap_limit
                 }
         return kwargs
-        
+   
+
+    def buildrun(self, params, cid, djs):
+        volbinds = self.returnVolumeBinds(djs.volumes, djs.volumesrw)
+        kwargs = { 'container': cid, 'binds': volbinds, 'port_bindings': djs.portbinding, 'lxc_conf': djs.lxc_conf, 'publish_all_ports': djs.publish_all_ports, 'links': djs.links, 'privileged': djs.priviledged, 'dns': djs.dns, 'dns_search': djs.dns_search, 'volumes_from': djs.volumes_from, 'network_mode': djs.network_mode, 'restart_policy': djs.restart_policy, 'cap_add': djs.cap_add, 'cap_drop': djs.cap_drop }
+        return kwargs
+
+
+
+
     def start_container(self):
         imagecommands = ImageFunctions()
         dcons = MakeDConnect()
         djs = DockerJSON()
         params = self.load_json()
         djs.parsejson(params)
+        djs.myvar = "foo"
         if not imagecommands.imageExistsByName(djs.configimage):
             print "Pulling image..."
             dcons.c.pull(djs.configimage, insecure_registry = True)
-        kwargs = self.buildconfig(params)
+        kwargs = self.buildconfig(params, djs)
+        # We should add a debug options and wrap a conditional here
+
         for k,v in kwargs.iteritems():
             print k, v
         newcontainer = dcons.c.create_container(**kwargs)
         print "Created new container {0}".format(newcontainer['Id'])
-        dcons.c.start(newcontainer['Id'], None, djs.port_bindings, djs.lxc_conf, djs.publish_all_ports, djs.links, djs.priviledged, djs.dns, djs.dns_search, djs.volumes_from, djs.network_mode)
-        print "000000000000000000000000000000000000000000000"
+        skwargs = self.buildrun(params, newcontainer['Id'], djs)
+        for k,v in skwargs.iteritems():
+            print k, v
+        #dcons.c.start(newcontainer['Id'], None, djs.port_bindings, djs.lxc_conf, djs.publish_all_ports, djs.links, djs.priviledged, djs.dns, djs.dns_search, djs.volumes_from, djs.network_mode)
+        dcons.c.start(**skwargs)
+
         kwargs = {'cuid': newcontainer['Id'][:8], 'outfile': None, 'directory': None, 'force': True}
         create = metadata.Create(**kwargs)
         create.write_files()
@@ -234,7 +294,7 @@ class DockerJSON(object):
         self.ports = params[0]['NetworkSettings']['Ports'] if not "" else None 
         self.environment = params[0]['Config']['Env'] if not "" else None 
         self.dns = params[0]['HostConfig']['Dns'] if not "" else None 
-        self.volumes = params[0]['Config']['Volumes'] if not "" else None 
+        self.volumes = params[0]['Volumes'] if not "" else None 
         self.volumes_from = params[0]['HostConfig']['VolumesFrom'] if not "" else None 
         self.network_disabled = params[0]['Config']['NetworkDisabled'] if not "" else None 
         self.name = params[0]['Name'] if not "" else None 
@@ -254,7 +314,7 @@ class DockerJSON(object):
         """
 
         # binds
-
+        self.binds = params[0]['HostConfig']['Binds'] if not "" else None 
         self.port_bindings = params[0]['HostConfig']['PortBindings'] if not "" else None 
         self.lxc_conf = params[0]['HostConfig']['LxcConf'] if not "" else None 
         self.publish_all_ports = params[0]['HostConfig']['PublishAllPorts'] if not "" else None 
@@ -262,6 +322,10 @@ class DockerJSON(object):
         self.priviledged = params[0]['HostConfig']['Privileged'] if not "" else None 
         self.dns_search = params[0]['HostConfig']['DnsSearch'] if not "" else None 
         self.network_mode = params[0]['HostConfig']['NetworkMode'] if not "" else None 
+        self.restart_policy = params[0]['HostConfig']['RestartPolicy'] if not "" else None 
+        self.cap_add = params[0]['HostConfig']['CapAdd'] if not "" else None
+        self.cap_drop = params[0]['HostConfig']['CapDrop'] if not "" else None
+        self.volumesrw = params[0]['VolumesRW'] if not "" else None
 
 
 class ImageFunctions(object):
