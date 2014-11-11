@@ -95,8 +95,53 @@ class Create(object):
         if self.outfile:
             out = self.outfile
         else:
-            out = "{0}.json".format(self.cuid)
+            name = self.container_json['Name'].replace('/', '', 1)
+            if '_' in name:
+                lname, rname = name.split('_')
+                lmatch = [s for s in self.docker_names['left'] if lname == s]
+                rmatch = [s for s in self.docker_names['right'] if rname == s]
+                if len(lmatch) == 0 and len(rmatch) == 0:
+                    out = "{0}.json".format(name)
+                else:
+                    out = "{0}.json".format(self.cuid)
+            else:
+                out = "{0}.json".format(name)
         return out
+
+    @property
+    def docker_names(self):
+        '''Return dict from docker name generator
+
+        See docker/pkg/namesgenerator/names-generator.go'''
+
+        left = [ "happy", "jolly", "dreamy", "sad", "angry", "pensive",
+                 "focused", "sleepy", "grave", "distracted", "determined",
+                 "stoic", "stupefied", "sharp", "agitated", "cocky",
+                 "tender", "goofy", "furious", "desperate", "hopeful",
+                 "compassionate", "silly", "lonely", "condescending",
+                 "naughty", "kickass", "drunk", "boring", "nostalgic",
+                 "ecstatic", "insane", "cranky", "mad", "jovial", "sick",
+                 "hungry", "thirsty", "elegant", "backstabbing", "clever",
+                 "trusting", "loving", "suspicious", "berserk", "high",
+                 "romantic", "prickly", "evil", "admiring", "adoring",
+                 "reverent", "serene", "fervent", "modest", "gloomy", "elated"]
+
+        right = [ "albattani", "almeida", "archimedes", "ardinghelli",
+                  "babbage", "bardeen", "bartik", "bell", "blackwell",
+                  "bohr", "brattain", "brown", "carson", "colden", "cori",
+                  "curie", "darwin", "davinci", "einstein", "elion",
+                  "engelbart", "euclid", "fermat", "fermi", "feynman",
+                  "franklin", "galileo", "goldstine", "goodall", "hawking",
+                  "heisenberg", "hodgkin", "hoover", "hopper", "hypatia",
+                  "jang", "jones", "kirch", "kowalevski", "lalande", "leakey",
+                  "lovelace", "lumiere", "mayer", "mccarthy", "mcclintock",
+                  "mclean", "meitner", "mestorf", "morse", "newton", "nobel",
+                  "pare", "pasteur", "perlman", "pike", "poincare", "ptolemy",
+                  "ritchie", "rosalind", "sammet", "shockley", "sinoussi",
+                  "stallman", "tesla", "thompson", "torvalds", "turing",
+                  "wilson", "wozniak", "wright", "yalow", "yonath" ]
+
+        return { "left": left, "right": right }
 
     @property
     def container_json(self):
