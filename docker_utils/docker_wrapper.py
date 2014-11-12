@@ -22,13 +22,12 @@ import json
 import os
 import subprocess
 import docker
-import time
 from docker_utils import metadata
 
 
 class Run(object):
     def __init__(self, **kwargs):
-        #self.dockercommand = kwargs['command']
+        # self.dockercommand = kwargs['command']
         self.jsonfile = kwargs['jsonfile']
         # FIXME
         self.remove = True
@@ -167,13 +166,12 @@ class Run(object):
                 return True
         return False
 
-    
-    def returnVolumeList (self, volumes):
+    def returnVolumeList(self, volumes):
         if type(volumes) is not dict:
             return None
         vollist = []
         for k, v in volumes.iteritems():
-            vollist.append(v)
+            vollist.append(k)  # Changed from v to k
         return vollist
 
     def returnVolumeBinds(self, volumes, volumesrw):
@@ -181,6 +179,7 @@ class Run(object):
             return None
         voldict = {}
         for k, v in volumes.iteritems():
+            print k
             if k in volumesrw:
                 perm = volumesrw[k]
                 # The docker-py API does this in inverse!
@@ -188,8 +187,7 @@ class Run(object):
                     perm = False
                 else:
                     perm = True
-                voldict[k] = {'bind': v, 'ro': perm}
-                print voldict[k]
+                voldict[v] = {'bind': k, 'ro': perm}
         return voldict
 
     def returnPortList(self, djs):
@@ -210,14 +208,10 @@ class Run(object):
             djs.portbinding = None
 
     def buildconfig(self, params, djs):
-        #djs = DockerJSON()
-        #params = self.load_json()
-        #djs.parsejson(params)
-
         vollist = self.returnVolumeList(djs.volumes)
         self.returnPortList(djs)
         kwargs = {
-                'image': djs.image, 'command': djs.cmd, 'hostname': djs.hostname,
+               'image': djs.image, 'command': djs.cmd, 'hostname': djs.hostname,
                 'user': djs.user, 'detach': False, 'stdin_open': False, 'tty': 'False',
                 'mem_limit': djs.mem_limit, 'ports': djs.portlist, 'environment': djs.environment,
                 'dns': djs.dns, 'volumes': vollist, 'volumes_from': djs.volumes_from,
