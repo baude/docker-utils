@@ -1,0 +1,104 @@
+[
+  {
+    "HostsPath": "", 
+    "Created": "2014-11-12T21:26:40.25856121Z", 
+    "Image": "", 
+    "Args": [], 
+    "Driver": "devicemapper", 
+    "HostConfig": {
+      "CapDrop": null, 
+      "PortBindings": null, 
+      "NetworkMode": "bridge", 
+      "Links": null, 
+      "LxcConf": [], 
+      "ContainerIDFile": "", 
+      "Devices": null, 
+      "CapAdd": null, 
+      "Binds": [
+        "/:/host:rw"
+      ], 
+      "RestartPolicy": {
+        "MaximumRetryCount": 0, 
+        "Name": ""
+      }, 
+      "PublishAllPorts": false, 
+      "Dns": null, 
+      "ExtraHosts": null, 
+      "DnsSearch": null, 
+      "Privileged": true, 
+      "VolumesFrom": null
+    }, 
+    "MountLabel": "system_u:object_r:svirt_sandbox_file_t:s0:c346,c828", 
+    "VolumesRW": {
+      "/host": true
+    }, 
+    "State": {
+      "Pid": 21938, 
+      "Paused": false, 
+      "Running": true, 
+      "FinishedAt": "", 
+      "Restarting": false, 
+      "StartedAt": "", 
+      "ExitCode": 0
+    }, 
+    "ExecDriver": "native-0.2", 
+    "ResolvConfPath": "", 
+    "Volumes": {
+      "/host": "/"
+    }, 
+    "Path": "/container/cockpit-run", 
+    "HostnamePath": "", 
+    "ProcessLabel": "system_u:system_r:svirt_lxc_net_t:s0:c346,c828", 
+    "Config": {
+      "Env": [
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+      ], 
+      "Hostname": "", 
+      "Entrypoint": null, 
+      "PortSpecs": null, 
+      "Memory": 0, 
+      "OnBuild": null, 
+      "OpenStdin": false, 
+      "Cpuset": "", 
+      "User": "", 
+      "CpuShares": 0, 
+      "AttachStdout": true, 
+      "NetworkDisabled": false, 
+      "WorkingDir": "", 
+      "Cmd": [
+        "/container/cockpit-run"
+      ], 
+      "StdinOnce": false, 
+      "AttachStdin": false, 
+      "MemorySwap": 0, 
+      "Volumes": {
+        "/host": {}
+      }, 
+      "Tty": false, 
+      "AttachStderr": true, 
+      "Domainname": "", 
+      "Image": "stefwalter/cockpit-atomic:wip", 
+      "SecurityOpt": null, 
+      "ExposedPorts": null
+    }, 
+    "Id": "", 
+    "NetworkSettings": {
+      "MacAddress": "02:42:ac:11:00:30", 
+      "Bridge": "docker0", 
+      "PortMapping": null, 
+      "IPPrefixLen": 16, 
+      "IPAddress": "172.17.0.48", 
+      "Gateway": "172.17.42.1", 
+      "Ports": {}
+    }, 
+    "Name": "/cockpit"
+  }, 
+  {
+    "UserParams": {
+      "rm": "", 
+      "dockercommand": "", 
+      "restart": "", 
+      "sig-proxy": ""
+    }
+  }
+]
