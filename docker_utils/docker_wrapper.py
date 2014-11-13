@@ -179,7 +179,7 @@ class Run(object):
             return None
         voldict = {}
         for k, v in volumes.iteritems():
-            print k
+            # print k ## debug
             if k in volumesrw:
                 perm = volumesrw[k]
                 # The docker-py API does this in inverse!
@@ -244,14 +244,15 @@ class Run(object):
         kwargs = self.buildconfig(params, djs)
         # We should add a debug options and wrap a conditional here
 
-        for k,v in kwargs.iteritems():
-            print k, v
+        # for k,v in kwargs.iteritems():
+          #  print k, v
         newcontainer = dcons.c.create_container(**kwargs)
         print "Created new container {0}".format(newcontainer['Id'])
         skwargs = self.buildrun(params, newcontainer['Id'], djs)
-        for k,v in skwargs.iteritems():
-            print k, v
-        #dcons.c.start(newcontainer['Id'], None, djs.port_bindings, djs.lxc_conf, djs.publish_all_ports, djs.links, djs.priviledged, djs.dns, djs.dns_search, djs.volumes_from, djs.network_mode)
+        # Debug 
+        # for k,v in skwargs.iteritems():
+          #  print k, v
+
         dcons.c.start(**skwargs)
 
         kwargs = {'cuid': newcontainer['Id'][:8], 'outfile': None, 'directory': None, 'force': True}
